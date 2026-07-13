@@ -1,4 +1,4 @@
-# MM-Fusion-Assistant
+# MM-Fusion-Assistant / 多模型聚合助手
 
 **一次输入，多端并发，聚合对比，智能终审**
 
