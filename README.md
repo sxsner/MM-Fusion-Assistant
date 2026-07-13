@@ -22,11 +22,11 @@
 | Gemini | gemini.google.com | ✅ |
 | DeepSeek | chat.deepseek.com | ✅ |
 | Grok | grok.com | ✅ |
-| 豆包 | www.doubao.com | ✅ |
+| 豆包 | doubao.com | ✅ |
 | 智谱 GLM | chat.z.ai | ✅ |
 | 通义千问 | chat.qwen.ai | ✅ |
 | 腾讯混元 | aistudio.tencent.com | ✅ |
-| Kimi | www.kimi.com | ✅ |
+| Kimi | kimi.com | ✅ |
 | MiniMax | agent.minimaxi.com | ✅ |
 | LongCat | longcat.chat | ✅ |
 | 阶跃星辰 | chat.stepfun.com | ✅ |
@@ -66,27 +66,6 @@
 3. 开启 **开发者模式**
 4. 点击 **加载已解压的扩展程序**，选择 `dist/` 目录
 
-## 开发
-
-```bash
-# 安装依赖
-npm install
-
-# 监听模式
-npm run dev
-
-# 类型检查
-npm run lint
-
-# 单元测试
-npm run test:unit
-
-# E2E 测试（有头 Playwright）
-npm run test:e2e
-
-# 完整验证（构建 + 单元测试 + E2E）
-npm run verify
-```
 
 ## 技术栈
 
@@ -97,7 +76,7 @@ npm run verify
 
 ## 参与贡献
 
-欢迎提交 Issue 或 Pull Request。
+https://github.com/afumu/openteam
 
 ## 许可证
 
