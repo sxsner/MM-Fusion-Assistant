@@ -2,103 +2,103 @@
 
 **一次输入，多端并发，聚合对比，智能终审**
 
-A Chrome Extension that lets you send prompts to multiple AI models simultaneously, compare their responses side by side, and get an intelligent final summary.
+一款 Chrome 扩展，支持向多个 AI 模型同时发送提示词，并排对比各模型的回答，最终生成智能聚合总结。
 
-## Features
+## 功能特性
 
-- **Multi-Model Concurrency** — Send one prompt to 14+ AI models at once
-- **Side-by-Side Comparison** — View all responses in a unified results grid
-- **Intelligent Aggregation** — Automatically synthesizes multi-model outputs into a final summary
-- **Workspace UI** — Side panel interface for managing conversations, history, and settings
-- **File Attachments** — Upload and attach files across supported models
-- **Export & History** — Browse, search, and export past conversation sessions
+- **多模型并发** — 一次输入同时发送到 14+ 个 AI 模型
+- **并排对比** — 在统一的结果网格中对比所有模型的回复
+- **智能聚合** — 自动综合多模型输出，生成终审总结
+- **工作台界面** — 侧边栏面板，管理对话、历史记录和设置
+- **文件附件** — 上传文件并跨模型共享
+- **导出与历史** — 浏览、搜索、导出历史对话记录
 
-## Supported Models
+## 支持的模型
 
-| Platform | Domain | Adapter |
-|----------|--------|---------|
+| 平台 | 域名 | 适配器 |
+|------|------|--------|
 | ChatGPT | chatgpt.com / chat.openai.com | ✅ |
 | Claude | claude.ai | ✅ |
 | Gemini | gemini.google.com | ✅ |
 | DeepSeek | chat.deepseek.com | ✅ |
 | Grok | grok.com | ✅ |
-| Doubao | www.doubao.com | ✅ |
-| GLM (Zhipu) | chat.z.ai | ✅ |
-| Qwen | chat.qwen.ai | ✅ |
-| Hunyuan | aistudio.tencent.com | ✅ |
+| 豆包 | www.doubao.com | ✅ |
+| 智谱 GLM | chat.z.ai | ✅ |
+| 通义千问 | chat.qwen.ai | ✅ |
+| 腾讯混元 | aistudio.tencent.com | ✅ |
 | Kimi | www.kimi.com | ✅ |
 | MiniMax | agent.minimaxi.com | ✅ |
 | LongCat | longcat.chat | ✅ |
-| StepFun | chat.stepfun.com | ✅ |
-| MiMo | aistudio.xiaomimimo.com | ✅ |
+| 阶跃星辰 | chat.stepfun.com | ✅ |
+| 小米 MiMo | aistudio.xiaomimimo.com | ✅ |
 
-## Architecture
+## 架构
 
 ```
 ┌──────────────────────────────────────────────────┐
-│                  Side Panel                       │
+│                  侧边栏面板                        │
 │  ┌──────────┐ ┌──────────┐ ┌──────────────────┐ │
-│  │ Composer │ │ Grid     │ │ Summary / Export  │ │
+│  │ 输入区   │ │ 结果网格 │ │   总结 / 导出     │ │
 │  └──────────┘ └──────────┘ └──────────────────┘ │
 ├──────────────────────────────────────────────────┤
-│              Background Service Worker            │
+│              后台 Service Worker                  │
 │  ┌──────────┐ ┌──────────┐ ┌──────────────────┐ │
-│  │ Router   │ │ Manager  │ │ Aggregator       │ │
+│  │ 消息路由 │ │ 任务管理 │ │  响应聚合器       │ │
 │  └──────────┘ └──────────┘ └──────────────────┘ │
 ├──────────────────────────────────────────────────┤
-│              Content Scripts (per model)          │
+│              内容脚本（每个模型一个）               │
 │  ChatGPT  Claude  Gemini  DeepSeek  Grok  ...    │
 └──────────────────────────────────────────────────┘
 ```
 
-- **Content Scripts** — Site-specific adapters that inject into each AI platform's page, send prompts, and extract responses
-- **Background SW** — Service worker managing message routing, prompt dispatching, response aggregation, history, and file management
-- **Side Panel** — Workspace UI built with TypeScript, featuring composer, results grid, summary view, settings, and history
+- **内容脚本** — 注入到各 AI 平台页面的站点适配器，负责发送提示词并提取回复
+- **后台 SW** — Service Worker，管理消息路由、提示词分发、响应聚合、历史记录和文件管理
+- **侧边栏面板** — TypeScript 构建的工作台 UI，包含输入区、结果网格、总结视图、设置和历史记录
 
-## Installation
+## 安装
 
-1. Build the extension:
+1. 构建扩展：
    ```bash
    npm install
    npm run build
    ```
-2. Open Chrome → `chrome://extensions`
-3. Enable **Developer mode**
-4. Click **Load unpacked** and select the `dist/` directory
+2. 打开 Chrome → `chrome://extensions`
+3. 开启 **开发者模式**
+4. 点击 **加载已解压的扩展程序**，选择 `dist/` 目录
 
-## Development
+## 开发
 
 ```bash
-# Install dependencies
+# 安装依赖
 npm install
 
-# Watch mode
+# 监听模式
 npm run dev
 
-# Lint (TypeScript check)
+# 类型检查
 npm run lint
 
-# Unit tests
+# 单元测试
 npm run test:unit
 
-# E2E tests (headed Playwright)
+# E2E 测试（有头 Playwright）
 npm run test:e2e
 
-# Full verification (build + unit + e2e)
+# 完整验证（构建 + 单元测试 + E2E）
 npm run verify
 ```
 
-## Tech Stack
+## 技术栈
 
-- **Language:** TypeScript
-- **Build:** Webpack + ts-loader
-- **Testing:** Vitest (unit) + Playwright (e2e)
-- **Runtime:** Chrome Extension Manifest V3
+- **语言：** TypeScript
+- **构建：** Webpack + ts-loader
+- **测试：** Vitest（单元测试）+ Playwright（E2E 测试）
+- **运行环境：** Chrome Extension Manifest V3
 
-## Contributing
+## 参与贡献
 
-Contributions are welcome! Please open an issue or pull request.
+欢迎提交 Issue 或 Pull Request。
 
-## License
+## 许可证
 
 [MIT](LICENSE)
