@@ -1,4 +1,4 @@
-# Multi-Model Copilot
+# MM-Fusion-Assistant
 
 **一次输入，多端并发，聚合对比，智能终审**
 

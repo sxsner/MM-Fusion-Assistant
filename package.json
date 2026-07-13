@@ -1,5 +1,5 @@
 {
-  "name": "multi-model-copilot",
+  "name": "mm-fusion-assistant",
   "version": "1.0.0",
   "description": "Chrome Extension - 多模型聚合助手",
   "scripts": {
