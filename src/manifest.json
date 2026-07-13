@@ -1,0 +1,72 @@
+{
+  "manifest_version": 3,
+  "name": "多模型聚合助手",
+  "version": "1.0.0",
+  "description": "一次输入，多端并发，聚合对比，智能终审",
+  "permissions": [
+    "storage",
+    "sidePanel",
+    "declarativeNetRequest",
+    "debugger",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+    "https://claude.ai/*",
+    "https://gemini.google.com/*",
+    "https://chat.deepseek.com/*",
+    "https://grok.com/*",
+    "https://www.doubao.com/*",
+    "https://chat.z.ai/*",
+    "https://chat.qwen.ai/*",
+    "https://aistudio.tencent.com/*",
+    "https://www.kimi.com/*",
+    "https://agent.minimaxi.com/*",
+    "https://longcat.chat/*",
+    "https://chat.stepfun.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://claude.ai/*",
+        "https://gemini.google.com/*",
+        "https://chat.deepseek.com/*",
+        "https://grok.com/*",
+        "https://www.doubao.com/*",
+        "https://chat.z.ai/*",
+        "https://chat.qwen.ai/*",
+        "https://aistudio.tencent.com/*",
+        "https://www.kimi.com/*",
+        "https://agent.minimaxi.com/*",
+        "https://longcat.chat/*",
+    "https://chat.stepfun.com/*",
+    "https://aistudio.xiaomimimo.com/*"
+      ],
+      "js": ["content/main.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
+  "side_panel": {
+    "default_path": "workspace.html"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com; frame-src https://chatgpt.com https://chat.openai.com https://claude.ai https://gemini.google.com https://chat.deepseek.com https://grok.com https://www.doubao.com https://chat.z.ai https://chat.qwen.ai https://aistudio.tencent.com https://www.kimi.com https://agent.minimaxi.com https://longcat.chat https://chat.stepfun.com;"
+  },
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "omniflow_frame_rules",
+        "enabled": true,
+        "path": "omniflow-frame-rules.json"
+      }
+    ]
+  }
+}

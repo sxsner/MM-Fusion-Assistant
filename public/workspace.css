@@ -1,0 +1,57 @@
+:root {
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --color-bg: #f5f5f5;
+  --color-surface: #ffffff;
+  --color-text: #1a1a1a;
+  --color-text-secondary: #666666;
+  --color-border: #e0e0e0;
+  --color-primary: #EE1C25;
+  --color-error: #ef4444;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-model-chatgpt: #10a37f;
+  --color-model-claude: #d97706;
+  --color-model-gemini: #4285f4;
+  --color-model-deepseek: #4f46e5;
+  --color-model-grok: #1da1f2;
+  --color-status-pending: #9ca3af;
+  --color-status-generating: #3b82f6;
+  --color-status-done: #22c55e;
+  --color-status-error: #ef4444;
+  --color-status-timeout: #f59e0b;
+  --font-sans: "Microsoft YaHei UI", sans-serif;
+  --font-mono: "Fira Code", "Cascadia Code", monospace;
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --card-min-width: 280px;
+  --card-max-width: 100%;
+  --z-content: 1;
+  --z-sticky: 10;
+  --z-overlay: 100;
+  --z-modal: 200;
+  --z-toast: 300;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.5;
+}
