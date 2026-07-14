@@ -1,10 +1,11 @@
 import type { SiteAdapter, Attachment } from './types';
 import { FileUploadHelpers } from '../fileUploadHelpers';
 import { getLimits } from './uploadLimits';
-import { waitForElement, waitForInput, setInputValue } from './adapter-utils';
+import { waitForElement, waitForInput, setContentEditableValue } from './adapter-utils';
 
-const SEL_TEXTAREA = 'textarea.message-input-textarea';
-const SEL_STOP = '[class*="stop"], [class*="pause"], [aria-label*="stop"], [aria-label*="停止"]';
+const SEL_INPUT = '[data-slate-editor="true"]';
+const SEL_STOP = 'button[aria-label="停止回答"]';
+const SEL_ANSWER = 'div[class*="message-select-wrapper-answer"]';
 
 
 export class QwneAdapter implements SiteAdapter {
@@ -16,14 +17,14 @@ export class QwneAdapter implements SiteAdapter {
     this.qwneStart = Date.now();
     this.qwneContent = '';
     this.qwneLastCapture = 0;
-    await waitForElement('.chat-messages, .sidebar, .chat-container');
+    await waitForElement('[data-chat-input-body]');
     await new Promise((r) => setTimeout(r, 1500 + Math.random() * 1500));
-    const input = await waitForInput(`${SEL_TEXTAREA}, textarea[class*="input"], textarea[class*="textarea"], textarea[placeholder*="输入"], textarea[placeholder*="message"]`) as HTMLTextAreaElement;
+    const input = (await waitForInput(SEL_INPUT)) as HTMLElement;
     await new Promise((r) => setTimeout(r, 500));
-    setInputValue(input as HTMLTextAreaElement, question);
+    setContentEditableValue(input, question);
     if (attachments.length > 0) await this.uploadFiles(attachments);
     await new Promise((r) => setTimeout(r, 2000 + Math.random() * 2000));
-    const sendBtn = document.querySelector<HTMLButtonElement>('button.send-button:not([disabled])');
+    const sendBtn = document.querySelector<HTMLButtonElement>('button[aria-label="发送消息"]');
     if (sendBtn) {
       sendBtn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 0 }));
       sendBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }));
@@ -33,7 +34,7 @@ export class QwneAdapter implements SiteAdapter {
       return;
     }
     await new Promise((r) => setTimeout(r, 2000 + Math.random() * 1000));
-    const retryBtn = document.querySelector<HTMLButtonElement>('button.send-button:not([disabled])');
+    const retryBtn = document.querySelector<HTMLButtonElement>('button[aria-label="发送消息"]');
     if (retryBtn) {
       retryBtn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 0 }));
       retryBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }));
@@ -43,10 +44,10 @@ export class QwneAdapter implements SiteAdapter {
       return;
     }
     await new Promise((r) => setTimeout(r, 1000));
-    (input as HTMLTextAreaElement).dispatchEvent(new KeyboardEvent('keydown', {
+    input.dispatchEvent(new KeyboardEvent('keydown', {
       key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true,
     }));
-    (input as HTMLTextAreaElement).dispatchEvent(new KeyboardEvent('keyup', {
+    input.dispatchEvent(new KeyboardEvent('keyup', {
       key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true,
     }));
   }
@@ -69,19 +70,10 @@ export class QwneAdapter implements SiteAdapter {
     if (this.qwneStart === 0) return '';
 
     if (now - this.qwneLastCapture >= 5000) {
-      const texts: string[] = [];
-      const textSpans = document.querySelectorAll<HTMLElement>('.qwen-markdown-text');
-      if (textSpans.length > 0) {
-        for (const s of textSpans) {
-          const t = s.textContent?.replace(/\s+/g, ' ').trim();
-          if (t) texts.push(t);
-        }
-        this.qwneContent = texts.join('\n');
-      } else {
-        const containers = document.querySelectorAll<HTMLElement>('.response-message-content .custom-qwen-markdown, .response-message-content .qwen-markdown');
-        if (containers.length > 0) {
-          this.qwneContent = containers[0].textContent?.replace(/\s+/g, ' ').trim() || '';
-        }
+      const container = document.querySelector<HTMLElement>(SEL_ANSWER);
+      if (container) {
+        const text = container.textContent?.replace(/\s+/g, ' ').trim() || '';
+        if (text) this.qwneContent = text;
       }
       this.qwneLastCapture = now;
     }
