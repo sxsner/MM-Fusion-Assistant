@@ -131,7 +131,7 @@ getUploadLimits()                    — 获取上传限制
 | `GrokAdapter` | `grok.ts` | Grok（grok.com） |
 | `DoubaoAdapter` | `doubao.ts` | 豆包（www.doubao.com） |
 | `GLMAdapter` | `glm.ts` | 智谱 GLM（chat.z.ai） |
-| `QwneAdapter` | `qwne.ts` | 通义千问（www.qianwen.com） |
+| `QwneAdapter` | `qwne.ts` | 通义千问国际版（chat.qwen.ai） |
 | `HunyuanAdapter` | `hunyuan.ts` | 腾讯混元（aistudio.tencent.com） |
 | `KimiAdapter` | `kimi.ts` | Kimi（www.kimi.com） |
 | `MiniMaxAdapter` | `minimax.ts` | MiniMax（agent.minimaxi.com） |
@@ -209,7 +209,7 @@ getUploadLimits()                    — 获取上传限制
 | Grok | grok.com | ✅ |
 | 豆包 | doubao.com | ✅ |
 | 智谱 GLM | chat.z.ai | ✅ |
-| 通义千问 (Qwne) | www.qianwen.com | ✅ |
+| 通义千问 (Qwne) | chat.qwen.ai | ✅ |
 | QwnC | — | ✅ |
 | 腾讯混元 | aistudio.tencent.com | ✅ |
 | Kimi | kimi.com | ✅ |

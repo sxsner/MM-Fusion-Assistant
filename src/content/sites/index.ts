@@ -24,6 +24,7 @@ const adapters: Record<string, SiteAdapter> = {
   'www.doubao.com': new DoubaoAdapter(),
   'chat.z.ai': new GLMAdapter(),
   'www.qianwen.com': new QwneAdapter(),
+  'chat.qwen.ai': new QwneAdapter(),
   'aistudio.tencent.com': new HunyuanAdapter(),
   'www.kimi.com': new KimiAdapter(),
   'agent.minimaxi.com': new MiniMaxAdapter(),

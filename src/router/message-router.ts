@@ -166,6 +166,7 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'https://www.doubao.com',
   'https://chat.z.ai',
   'https://www.qianwen.com',
+  'https://chat.qwen.ai',
   'https://aistudio.tencent.com',
   'https://www.kimi.com',
   'https://agent.minimaxi.com',
