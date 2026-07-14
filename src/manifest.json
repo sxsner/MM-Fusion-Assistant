@@ -1,8 +1,13 @@
 {
   "manifest_version": 3,
   "name": "多模型聚合助手",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "一次输入，多端并发，聚合对比，智能终审",
+  "icons": {
+    "16": "logo.png",
+    "48": "logo.png",
+    "128": "logo.png"
+  },
   "permissions": [
     "storage",
     "sidePanel",

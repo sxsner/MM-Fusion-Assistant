@@ -5,7 +5,6 @@ import { Store, SummarySettingsStore } from '../shared/store';
 import { HistoryView } from './historyView';
 import { HistoryManager } from '../background/historyManager';
 import { ResultsGridView } from './resultsGridView';
-import { BackgroundTabsView } from './backgroundTabsView';
 import { PromptView } from './promptView';
 import { ScoreView } from './scoreView';
 import type { ModelType, ModelResult } from '../shared/types';
@@ -16,16 +15,16 @@ import { logger } from '../shared/logger';
 
 const MODEL_LABELS: Record<string, string> = {
   chatgpt: 'GPT', claude: 'Claud', gemini: 'Gmini', deepseek: 'DSeek', grok: 'Grok',
-  doubao: 'Seed', glm: 'GLM', qwne: 'Qwne', qwnc: 'QwnC', hunyuan: 'Hy',
+  doubao: 'Seed', glm: 'GLM', qwne: 'QwnE', qwnc: 'QwnC', hunyuan: 'Hy',
   kimi: 'Kimi', minimax: 'Nimax', longcat: 'LCat', stepfun: 'Step', mimo: 'MiMo',
 };
 
-const TAB_DEFS = ['home', 'history', 'settings', 'backend', 'prompt', 'score'];
-const TAB_LABELS: Record<string, string> = { home: '主页', history: '历史', settings: '设置', backend: '后台', prompt: '提示词', score: '评分' };
+const TAB_DEFS = ['home', 'history', 'settings', 'prompt', 'score'];
+const TAB_LABELS: Record<string, string> = { home: '主页', history: '历史', settings: '设置', prompt: '提示词', score: '评分' };
 
 function createTabs(app: HTMLElement, tabButtons: Record<string, HTMLDivElement>, switchTab: (id: string) => void): void {
   const tabs = document.createElement('div');
-  tabs.style.cssText = 'display:flex;border-bottom:1px solid var(--color-border);flex-shrink:0;padding:0 4px;';
+  tabs.style.cssText = 'display:flex;border-bottom:1px solid var(--color-border);flex-shrink:0;padding:0 var(--space-sm);';
   for (const id of TAB_DEFS) {
     const btn = document.createElement('div');
     btn.textContent = TAB_LABELS[id];
@@ -154,7 +153,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const settingsView = new SettingsView(panels.settings, summarySettingsStore, modelStore);
 
-  const backgroundTabsView = new BackgroundTabsView(panels.backend);
   new PromptView(panels.prompt);
   const scoreView = new ScoreView(panels.score);
 
@@ -168,19 +166,21 @@ document.addEventListener('DOMContentLoaded', () => {
     activeModelTag = mid;
     resultsGrid.showOnly(mid);
     updateModelTags();
+    summarySettingsStore.get().then((s) => {
+      if (s.bringModelToFront) {
+        switchOrOpenModelTab(mid);
+      }
+    }).catch(() => {});
   });
   homePanel.insertBefore(modelTagsRow, homePanel.firstChild);
 
   const resultsGrid = new ResultsGridView(homePanel);
 
-  const tagDots = new Map<string, HTMLSpanElement>();
   let selectedModels: ModelType[] = [];
-  let activeModelTag: string | null = 'deepseek';
-  const statusColors: Record<string, string> = { pending: '#9ca3af', generating: '#3b82f6', done: '#22c55e', error: '#ef4444' };
+  let activeModelTag: string | null = null;
 
   function updateModelTags(): void {
     modelTagsRow.innerHTML = '';
-    tagDots.clear();
     const allModels: ModelType[] = selectedModels.length > 0
       ? (MODEL_IDS as ModelType[]).filter((m) => selectedModels.includes(m))
       : MODEL_IDS as ModelType[];
@@ -194,30 +194,22 @@ document.addEventListener('DOMContentLoaded', () => {
         'cursor:pointer', 'user-select:none',
         'border:1px solid var(--color-border)', 'border-radius:2px',
         isActive ? 'background:#EE1C25;color:#FFCC00;border-color:#EE1C25;' : 'background:var(--color-surface);color:var(--color-text-secondary);',
-        'display:inline-flex', 'align-items:center', 'gap:2px',
+        'display:inline-flex', 'align-items:center',
       ].join(';');
-      const dot = document.createElement('span');
-      dot.style.cssText = 'display:inline-block;width:6px;height:6px;border-radius:50%;background:#9ca3af;flex-shrink:0;';
-      tagDots.set(m, dot);
       const txt = document.createElement('span');
       txt.textContent = MODEL_LABELS[m] || m;
-      tag.appendChild(dot);
       tag.appendChild(txt);
       modelTagsRow.appendChild(tag);
     }
   }
 
-  function setModelStatus(modelId: string, status: string): void {
-    const dot = tagDots.get(modelId);
-    if (!dot) return;
-    dot.style.background = statusColors[status] || '#9ca3af';
-    dot.style.animation = status === 'pending' || status === 'generating' ? 'dot-blink 1s infinite' : 'none';
+  function setModelStatus(_modelId: string, _status: string): void {
   }
   let unsubscribeModels: (() => void) | undefined;
-  modelStore.getSelectedModels().then((models) => { selectedModels = models; updateModelTags(); resultsGrid.showOnly('deepseek'); }).catch((err) => {
+  modelStore.getSelectedModels().then((models) => { selectedModels = models; activeModelTag = models.length > 0 ? models[0] : null; updateModelTags(); resultsGrid.showOnly(activeModelTag as ModelType | null); }).catch((err) => {
     logger.error('POPUP', crypto.randomUUID(), 'Failed to load selected models: ' + (err instanceof Error ? err.message : String(err)));
   });
-  unsubscribeModels = modelStore.onChange((models) => { selectedModels = models; updateModelTags(); backgroundTabsView.load(); });
+  unsubscribeModels = modelStore.onChange((models) => { selectedModels = models; if (models.length > 0 && !models.includes(activeModelTag as ModelType)) activeModelTag = models[0]; else if (models.length === 0) activeModelTag = null; updateModelTags(); });
 
   const composerView = new ComposerView(homePanel, modelStore, () => currentConversationUrls, () => sessionConversationId);
   let syncTimer: ReturnType<typeof setInterval> | undefined;
@@ -309,7 +301,6 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.style.color = isActive ? 'var(--color-text)' : 'var(--color-text-secondary)';
     }
     if (id === 'history') historyView.load();
-    if (id === 'backend') backgroundTabsView.load();
   }
 
   let summaryBusy = false;
@@ -413,7 +404,6 @@ document.addEventListener('DOMContentLoaded', () => {
     unsubscribeModels?.();
     chrome.runtime.onMessage.removeListener(onModelUpdate);
     settingsView.destroy();
-    backgroundTabsView.destroy();
     composerView.destroy();
     resultsGrid.destroy();
     summaryView.destroy();

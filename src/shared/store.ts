@@ -83,7 +83,7 @@ export class SummarySettingsStore extends BaseStore<SummarySettings> {
   }
 
   protected getDefault(): SummarySettings {
-    return { mode: 'api', provider: 'openai' };
+    return { mode: 'web', provider: 'openai', bringModelToFront: false };
   }
 
   // [BUG-FIX] F6 - 存储改为 chrome.storage.local（apiKey 涉及敏感信息，不同步）

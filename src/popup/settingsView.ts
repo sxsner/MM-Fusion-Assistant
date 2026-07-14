@@ -14,14 +14,13 @@ const PROVIDER_OPTIONS = [
 
 const MODEL_LABELS: Record<string, string> = {
   chatgpt: 'GPT', claude: 'Claud', gemini: 'Gmini', deepseek: 'DSeek', grok: 'Grok',
-  doubao: 'Seed', glm: 'GLM', qwne: 'Qwne', qwnc: 'QwnC', hunyuan: 'Hy',
+  doubao: 'Seed', glm: 'GLM', qwne: 'QwnE', qwnc: 'QwnC', hunyuan: 'Hy',
   kimi: 'Kimi', minimax: 'Nimax', longcat: 'LCat', stepfun: 'Step', mimo: 'MiMo',
 };
 
 export class SettingsView {
   private root: HTMLDivElement;
   private store: SummarySettingsStore;
-  private modeRadios!: NodeListOf<HTMLInputElement>;
   private apiSection!: HTMLDivElement;
   private webSection!: HTMLDivElement;
   private providerSelect!: HTMLSelectElement;
@@ -68,28 +67,32 @@ export class SettingsView {
   private buildUI(): void {
     const header = document.createElement('div');
     header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;';
+    const headerLeft = document.createElement('div');
+    headerLeft.style.cssText = 'display:flex;align-items:center;gap:var(--space-sm);';
     const title = document.createElement('span');
     title.textContent = '设置';
     title.style.cssText = 'font-weight:600;font-size:var(--font-size-md);';
+    const modelToggleHint = document.createElement('span');
+    modelToggleHint.textContent = '启用模型（点击切换）';
+    modelToggleHint.style.cssText = 'font-size:var(--font-size-sm);color:var(--color-text-secondary);font-weight:400;';
     const version = document.createElement('span');
     version.textContent = 'v' + chrome.runtime.getManifest().version;
     version.style.cssText = 'font-size:var(--font-size-sm);color:var(--color-text-secondary);';
-    header.appendChild(title);
+    headerLeft.appendChild(title);
+    headerLeft.appendChild(modelToggleHint);
+    header.appendChild(headerLeft);
     header.appendChild(version);
     this.root.appendChild(header);
 
     this.buildModelSelection();
     this.buildSummarySection();
+    this.buildBehaviorConfig();
     this.buildTimingConfig();
   }
 
   private buildModelSelection(): void {
     const section = document.createElement('div');
     section.style.cssText = 'display:flex;flex-direction:column;gap:var(--space-xs);';
-
-    const label = document.createElement('span');
-    label.textContent = '启用模型（点击切换）';
-    label.style.cssText = 'font-weight:500;font-size:var(--font-size-sm);';
 
     const list = document.createElement('div');
     list.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
@@ -106,15 +109,14 @@ export class SettingsView {
       list.innerHTML = '';
       this.modelToggles = [];
       for (const id of MODEL_IDS) {
-        const isDeepSeek = id === 'deepseek';
-        const isSelected = isDeepSeek || selectedModels.includes(id as ModelType);
+        const isSelected = selectedModels.includes(id as ModelType);
         const btn = document.createElement('button');
         btn.style.cssText = [
           'display:inline-flex;align-items:center;justify-content:center;gap:4px;',
           'padding:4px 6px;min-width:72px;',
           'font-family:var(--font-sans);font-size:var(--font-size-sm);',
           'border:1px solid var(--color-border);border-radius:var(--radius-sm);',
-          isDeepSeek ? 'cursor:default;' : 'cursor:pointer;', 'user-select:none;',
+          'cursor:pointer;', 'user-select:none;',
           isSelected
             ? `background:${colorMap[id] || '#999'};color:#fff;border-color:${colorMap[id] || '#999'};`
             : 'background:var(--color-surface);color:var(--color-text-secondary);',
@@ -129,29 +131,31 @@ export class SettingsView {
         btn.appendChild(dot);
         btn.appendChild(document.createTextNode(MODEL_LABELS[id] || id));
 
-        if (!isDeepSeek) {
-          btn.addEventListener('click', () => {
-            const idx = selectedModels.indexOf(id as ModelType);
-            if (idx >= 0) {
-              selectedModels.splice(idx, 1);
-            } else {
-              selectedModels.push(id as ModelType);
+        btn.addEventListener('click', () => {
+          const idx = selectedModels.indexOf(id as ModelType);
+          if (idx >= 0) {
+            selectedModels.splice(idx, 1);
+          } else {
+            if ((id === 'qwne' || id === 'qwnc')) {
+              const other = id === 'qwne' ? 'qwnc' : 'qwne';
+              const otherIdx = selectedModels.indexOf(other as ModelType);
+              if (otherIdx >= 0) selectedModels.splice(otherIdx, 1);
             }
-            this.modelStore?.setSelectedModels([...selectedModels]);
-            this.onModelChange?.();
-            renderToggles();
-          }, { signal: this.ac.signal });
-        }
+            selectedModels.push(id as ModelType);
+          }
+          this.modelStore?.setSelectedModels([...selectedModels]);
+          this.onModelChange?.();
+          renderToggles();
+        }, { signal: this.ac.signal });
 
         list.appendChild(btn);
         this.modelToggles.push(btn);
       }
     };
 
-    this.modelStore?.getSelectedModels().then((models) => { if (!models.includes('deepseek' as ModelType)) models.push('deepseek' as ModelType); selectedModels = models; renderToggles(); }).catch((err) => { logger.warn('SETTINGS', crypto.randomUUID(), 'getSelectedModels failed: ' + (err instanceof Error ? err.message : String(err))); });
+    this.modelStore?.getSelectedModels().then((models) => { selectedModels = models; renderToggles(); }).catch((err) => { logger.warn('SETTINGS', crypto.randomUUID(), 'getSelectedModels failed: ' + (err instanceof Error ? err.message : String(err))); });
     if (!this.modelStore) renderToggles();
 
-    section.appendChild(label);
     section.appendChild(list);
     this.root.appendChild(section);
   }
@@ -164,21 +168,28 @@ export class SettingsView {
     modeLabel.textContent = '汇总来源';
     modeLabel.style.cssText = 'font-weight:500;font-size:var(--font-size-sm);white-space:nowrap;';
 
-    const apiRadio = this.createRadio('mode', 'api', 'API');
-    const webRadio = this.createRadio('mode', 'web', '网页端');
-    modeGroup.appendChild(modeLabel);
-    modeGroup.appendChild(apiRadio);
-    modeGroup.appendChild(webRadio);
-    this.root.appendChild(modeGroup);
+    const apiBtn = document.createElement('button');
+    apiBtn.textContent = 'API';
+    apiBtn.style.cssText = 'padding:2px 8px;font-size:var(--font-size-sm);border:1px solid var(--color-border);border-radius:var(--radius-sm);cursor:pointer;';
+    const webBtn = document.createElement('button');
+    webBtn.textContent = '网页端';
+    webBtn.style.cssText = 'padding:2px 8px;font-size:var(--font-size-sm);border:1px solid var(--color-border);border-radius:var(--radius-sm);cursor:pointer;';
 
-    this.modeRadios = this.root.querySelectorAll('input[name="mode"]') as NodeListOf<HTMLInputElement>;
-    for (const radio of this.modeRadios) {
-      radio.addEventListener('change', () => {
-        if ((radio as HTMLInputElement).checked) {
-          this.onModeChange((radio as HTMLInputElement).value as 'api' | 'web');
-        }
-      }, { signal: this.ac.signal }); // [BUG-FIX] B-006 - AbortController signal
-    }
+    const updateModeBtns = (mode: 'api' | 'web') => {
+      apiBtn.style.background = mode === 'api' ? 'var(--color-primary)' : 'var(--color-surface)';
+      apiBtn.style.color = mode === 'api' ? '#FFCC00' : 'var(--color-text-secondary)';
+      webBtn.style.background = mode === 'web' ? 'var(--color-primary)' : 'var(--color-surface)';
+      webBtn.style.color = mode === 'web' ? '#FFCC00' : 'var(--color-text-secondary)';
+    };
+
+    apiBtn.addEventListener('click', () => { this.onModeChange('api'); updateModeBtns('api'); }, { signal: this.ac.signal });
+    webBtn.addEventListener('click', () => { this.onModeChange('web'); updateModeBtns('web'); }, { signal: this.ac.signal });
+    this.store.get().then((s) => updateModeBtns(s.mode || 'web')).catch(() => {});
+
+    modeGroup.appendChild(modeLabel);
+    modeGroup.appendChild(apiBtn);
+    modeGroup.appendChild(webBtn);
+    this.root.appendChild(modeGroup);
 
     this.apiSection = document.createElement('div');
     this.apiSection.style.cssText = 'display:flex;flex-direction:column;gap:var(--space-xs);';
@@ -189,20 +200,6 @@ export class SettingsView {
     this.webSection.style.cssText = 'display:flex;flex-direction:column;gap:var(--space-xs);';
     this.buildWebConfig();
     this.root.appendChild(this.webSection);
-  }
-
-  private createRadio(name: string, value: string, label: string): HTMLLabelElement {
-    const lbl = document.createElement('label');
-    lbl.style.cssText = 'display:flex;align-items:center;gap:var(--space-xs);cursor:pointer;font-size:var(--font-size-sm);';
-    const input = document.createElement('input');
-    input.type = 'radio';
-    input.name = name;
-    input.value = value;
-    const txt = document.createElement('span');
-    txt.textContent = label;
-    lbl.appendChild(input);
-    lbl.appendChild(txt);
-    return lbl;
   }
 
   private createField(label: string, input: HTMLElement): HTMLDivElement {
@@ -300,6 +297,33 @@ export class SettingsView {
     webRow.appendChild(webLbl);
     webRow.appendChild(this.webModelSelect);
     this.webSection.appendChild(webRow);
+  }
+
+  private buildBehaviorConfig(): void {
+    const section = document.createElement('div');
+    section.style.cssText = 'display:flex;align-items:center;gap:8px;border-top:1px solid var(--color-border);padding-top:var(--space-sm);margin-top:var(--space-sm);';
+    const label = document.createElement('span');
+    label.textContent = '模型标签激活窗口';
+    label.style.cssText = 'font-weight:500;font-size:var(--font-size-sm);white-space:nowrap;';
+    const yesBtn = document.createElement('button');
+    yesBtn.textContent = '是';
+    yesBtn.style.cssText = 'padding:2px 8px;font-size:var(--font-size-sm);border:1px solid var(--color-border);border-radius:var(--radius-sm);cursor:pointer;';
+    const noBtn = document.createElement('button');
+    noBtn.textContent = '否';
+    noBtn.style.cssText = 'padding:2px 8px;font-size:var(--font-size-sm);border:1px solid var(--color-border);border-radius:var(--radius-sm);cursor:pointer;';
+    const updateBtns = (val: boolean) => {
+      yesBtn.style.background = val ? 'var(--color-primary)' : 'var(--color-surface)';
+      yesBtn.style.color = val ? '#FFCC00' : 'var(--color-text-secondary)';
+      noBtn.style.background = val ? 'var(--color-surface)' : 'var(--color-primary)';
+      noBtn.style.color = val ? 'var(--color-text-secondary)' : '#FFCC00';
+    };
+    yesBtn.addEventListener('click', () => { this.store.update({ bringModelToFront: true }); updateBtns(true); }, { signal: this.ac.signal });
+    noBtn.addEventListener('click', () => { this.store.update({ bringModelToFront: false }); updateBtns(false); }, { signal: this.ac.signal });
+    this.store.get().then((s) => updateBtns(s.bringModelToFront !== false)).catch(() => {});
+    section.appendChild(label);
+    section.appendChild(yesBtn);
+    section.appendChild(noBtn);
+    this.root.appendChild(section);
   }
 
   private buildTimingConfig(): void {
@@ -406,9 +430,6 @@ export class SettingsView {
   }
 
   private applySettings(s: SummarySettings): void {
-    for (const radio of this.modeRadios) {
-      (radio as HTMLInputElement).checked = (radio as HTMLInputElement).value === s.mode;
-    }
     this.apiSection.style.display = s.mode === 'api' ? 'flex' : 'none';
     this.webSection.style.display = s.mode === 'web' ? 'flex' : 'none';
     if (s.provider) this.providerSelect.value = s.provider;

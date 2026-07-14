@@ -79,6 +79,7 @@ export interface SummarySettings {
   baseUrl?: string;
   modelName?: string;
   webModelId?: ModelType;
+  bringModelToFront?: boolean;
 }
 
 export interface TaskSubmitMessage {

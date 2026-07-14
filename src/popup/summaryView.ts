@@ -75,7 +75,7 @@ export class SummaryView {
 
     this.sourceIndicator = document.createElement('span');
     this.sourceIndicator.style.cssText = 'margin-left:auto;font-size:var(--font-size-sm);color:var(--color-text-secondary);font-family:var(--font-sans);';
-    this.sourceIndicator.textContent = '来源: API';
+    this.sourceIndicator.textContent = '来源: 网页端';
 
     btnBar.appendChild(this.triggerBtn);
     btnBar.appendChild(this.copyBtn);

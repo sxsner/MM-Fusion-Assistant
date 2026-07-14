@@ -1,23 +1,12 @@
-import { logger, setLogRelay } from '../shared/logger';
+import { logger } from '../shared/logger';
 import { performHandshake } from './frameHandshake';
 import { getAdapter } from './sites';
 import type { Attachment } from '../shared/types';
-import { initConsoleRelay } from './consoleRelay';
 import { getTimingConfig } from '../shared/store';
 import { setInputDelay, setSendDelay } from './sites/adapter-utils';
 
 const MODULE = 'CS';
 const traceId = crypto.randomUUID();
-
-setLogRelay((level, mod, tid, msg) => {
-  chrome.runtime.sendMessage({
-    channel: 'log:relay',
-    payload: { level, msg: `[${mod}] ${msg}` },
-    trace_id: tid,
-  }).catch(() => {/* content script context unavailable */});
-});
-
-initConsoleRelay();
 
 /** Per-batch dedup: key = taskId_batchIndex */
 const processedBatches = new Set<string>();

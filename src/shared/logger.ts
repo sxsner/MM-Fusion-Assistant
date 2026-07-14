@@ -16,13 +16,6 @@ function log(level: LogLevel, module: string, traceId: string, message: string) 
   if (level === 'ERROR') console.error(line);
   else console.log(line);
   try { appendLog(level, module, traceId, message); } catch { console.warn('appendLog failed', module, traceId); }
-  if (_relayFn) { try { _relayFn(level, module, traceId, message); } catch { console.warn('relay failed', module, traceId); } }
-}
-
-let _relayFn: ((level: LogLevel, module: string, traceId: string, message: string) => void) | null = null;
-
-export function setLogRelay(fn: (level: LogLevel, module: string, traceId: string, message: string) => void): void {
-  _relayFn = fn;
 }
 
 const SENSITIVE_PATTERNS: { regex: RegExp; replacement: string }[] = [

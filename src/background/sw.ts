@@ -58,15 +58,6 @@ on('content:ready', async (payload, sender, tid) => {
   return { success: false, data: null, error: { code: 'NO_TAB', message: '无法获取 tabId' }, trace_id: tid };
 });
 
-on('log:relay', async (payload, _sender, tid) => {
-  const { level, msg } = payload as { level: string; msg: string };
-  if (level === 'ERROR') logger.error('CS>SW', tid, msg);
-  else if (level === 'WARN') logger.warn('CS>SW', tid, msg);
-  else if (level === 'DEBUG') logger.debug('CS>SW', tid, msg);
-  else logger.info('CS>SW', tid, msg);
-  return success({ received: true }, tid);
-});
-
 on('claim:send', async (payload, sender, tid) => {
   const { taskId } = payload as { taskId: string };
   const tabId = sender.tab?.id;

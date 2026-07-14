@@ -94,7 +94,7 @@ function handleMessage(
   const traceId = msg.trace_id;
   const channel = msg.channel;
 
-  if (!['tabs:list', 'log:relay'].includes(channel)) logger.debug(MODULE, traceId, `收到消息 channel=${channel}`);
+  if (channel !== 'tabs:list') logger.debug(MODULE, traceId, `收到消息 channel=${channel}`);
 
   const handler = handlers.get(channel);
   if (!handler) {

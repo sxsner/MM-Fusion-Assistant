@@ -10,7 +10,7 @@ const MODEL_LABELS: Record<ModelType, string> = {
   grok: 'Grok',
   doubao: 'Seed',
   glm: 'GLM',
-  qwne: 'Qwne', qwnc: 'QwnC',
+  qwne: 'QwnE', qwnc: 'QwnC',
   hunyuan: 'Hy',
   kimi: 'Kimi',
   minimax: 'Nimax',
@@ -113,7 +113,16 @@ export class ModelSelector {
     cb.style.cssText = 'margin:0;cursor:pointer';
     this.checkboxes.set(modelId, cb);
 
-    cb.addEventListener('change', () => this.emitChange());
+    cb.addEventListener('change', () => {
+      if (cb.checked && (modelId === 'qwne' || modelId === 'qwnc')) {
+        const other = modelId === 'qwne' ? 'qwnc' : 'qwne';
+        const otherCb = this.checkboxes.get(other as ModelType);
+        if (otherCb?.checked) {
+          otherCb.checked = false;
+        }
+      }
+      this.emitChange();
+    });
 
     label.appendChild(dot);
     label.appendChild(cb);

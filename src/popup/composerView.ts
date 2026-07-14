@@ -95,8 +95,17 @@ export class ComposerView {
     this.clearBtn.title = '清空所有模型回复';
     this.clearBtn.style.cssText = btnStyle({ background: 'var(--color-surface)', color: 'var(--color-text-secondary)' });
 
+    const closeAllBtn = document.createElement('button');
+    closeAllBtn.textContent = '全部关闭';
+    closeAllBtn.title = '关闭所有后台模型窗口';
+    closeAllBtn.style.cssText = btnStyle({ background: 'var(--color-surface)', color: 'var(--color-status-error)', 'margin-left': 'auto' });
+    closeAllBtn.addEventListener('click', () => {
+      if (!confirm('确定关闭所有后台标签页？')) return;
+      chrome.runtime.sendMessage({ channel: 'tabs:closeAll' }).catch(() => {});
+    }, { signal: this.ac.signal });
+
     const syncBtn = document.createElement('button');
-    syncBtn.textContent = '同步回答';
+    syncBtn.textContent = '手动同步';
     syncBtn.title = '强制同步最新回答';
     syncBtn.style.cssText = btnStyle({ background: 'var(--color-surface)', color: 'var(--color-text-secondary)' });
     let syncCooldown = false;
@@ -119,6 +128,7 @@ export class ComposerView {
     btnRow.appendChild(this.fileInput);
     btnRow.appendChild(this.sendBtn);
     btnRow.appendChild(this.clearBtn);
+    btnRow.appendChild(closeAllBtn);
     btnRow.appendChild(syncBtn);
     wrapper.appendChild(btnRow);
     container.appendChild(wrapper);

@@ -1,4 +1,4 @@
-export const MODEL_IDS: string[] = ['deepseek', 'doubao', 'qwne', 'qwnc', 'glm', 'claude', 'chatgpt', 'grok', 'gemini', 'kimi', 'minimax', 'mimo', 'stepfun', 'hunyuan', 'longcat'];
+export const MODEL_IDS: string[] = ['deepseek', 'doubao', 'qwne', 'qwnc', 'claude', 'chatgpt', 'grok', 'gemini', 'glm', 'kimi', 'minimax', 'mimo', 'stepfun', 'hunyuan', 'longcat'];
 
 export const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000;
 
