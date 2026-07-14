@@ -355,7 +355,7 @@ export class SettingsView {
     const ftTitle = document.createElement('b');
     ftTitle.textContent = '使用说明';
     foot.appendChild(ftTitle);
-    for (const note of ['1. 尽量只提一轮（1个问题+1个回答）再汇总，太多容易崩', '2. 文件上传功能不要用，没做好', '3. 历史和日志功能也没做好']) {
+    for (const note of ['1. 尽量只提一轮（1个问题+1个回答）再汇总，太多容易崩', '2. 文件上传功能不要用，没做好', '3. 历史功能也没做好']) {
       foot.appendChild(document.createElement('br'));
       foot.appendChild(document.createTextNode(note));
     }

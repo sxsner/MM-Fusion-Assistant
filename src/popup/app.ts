@@ -5,7 +5,6 @@ import { Store, SummarySettingsStore } from '../shared/store';
 import { HistoryView } from './historyView';
 import { HistoryManager } from '../background/historyManager';
 import { ResultsGridView } from './resultsGridView';
-import { DebugConsole } from './debugConsole';
 import { BackgroundTabsView } from './backgroundTabsView';
 import { PromptView } from './promptView';
 import { ScoreView } from './scoreView';
@@ -21,8 +20,8 @@ const MODEL_LABELS: Record<string, string> = {
   kimi: 'Kimi', minimax: 'Nimax', longcat: 'LCat', stepfun: 'Step', mimo: 'MiMo',
 };
 
-const TAB_DEFS = ['home', 'history', 'log', 'settings', 'backend', 'prompt', 'score'];
-const TAB_LABELS: Record<string, string> = { home: '主页', history: '历史', log: '日志', settings: '设置', backend: '后台', prompt: '提示词', score: '评分' };
+const TAB_DEFS = ['home', 'history', 'settings', 'backend', 'prompt', 'score'];
+const TAB_LABELS: Record<string, string> = { home: '主页', history: '历史', settings: '设置', backend: '后台', prompt: '提示词', score: '评分' };
 
 function createTabs(app: HTMLElement, tabButtons: Record<string, HTMLDivElement>, switchTab: (id: string) => void): void {
   const tabs = document.createElement('div');
@@ -154,11 +153,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const settingsView = new SettingsView(panels.settings, summarySettingsStore, modelStore);
-
-  const debugConsoleContainer = document.createElement('div');
-  debugConsoleContainer.style.cssText = 'display:flex;flex-direction:column;flex:1;';
-  panels.log.appendChild(debugConsoleContainer);
-  new DebugConsole(debugConsoleContainer);
 
   const backgroundTabsView = new BackgroundTabsView(panels.backend);
   new PromptView(panels.prompt);
