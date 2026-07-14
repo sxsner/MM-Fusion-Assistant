@@ -1,4 +1,4 @@
-export type ModelType = 'chatgpt' | 'claude' | 'gemini' | 'deepseek' | 'grok' | 'doubao' | 'glm' | 'qwnc' | 'hunyuan' | 'kimi' | 'minimax' | 'longcat' | 'stepfun' | 'mimo';
+export type ModelType = 'chatgpt' | 'claude' | 'gemini' | 'deepseek' | 'grok' | 'doubao' | 'glm' | 'qwne' | 'hunyuan' | 'kimi' | 'minimax' | 'longcat' | 'stepfun' | 'mimo';
 
 export type TaskStatus =
   | 'pending'

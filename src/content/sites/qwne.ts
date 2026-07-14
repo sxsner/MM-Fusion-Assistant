@@ -7,15 +7,15 @@ const SEL_TEXTAREA = 'textarea.message-input-textarea';
 const SEL_STOP = '[class*="stop"], [class*="pause"], [aria-label*="stop"], [aria-label*="停止"]';
 
 
-export class QwnCAdapter implements SiteAdapter {
-  private qwncStart = 0;
-  private qwncContent = '';
-  private qwncLastCapture = 0;
+export class QwneAdapter implements SiteAdapter {
+  private qwneStart = 0;
+  private qwneContent = '';
+  private qwneLastCapture = 0;
 
   async fillAndSend(question: string, attachments: Attachment[]): Promise<void> {
-    this.qwncStart = Date.now();
-    this.qwncContent = '';
-    this.qwncLastCapture = 0;
+    this.qwneStart = Date.now();
+    this.qwneContent = '';
+    this.qwneLastCapture = 0;
     await waitForElement('.chat-messages, .sidebar, .chat-container');
     await new Promise((r) => setTimeout(r, 1500 + Math.random() * 1500));
     const input = await waitForInput(`${SEL_TEXTAREA}, textarea[class*="input"], textarea[class*="textarea"], textarea[placeholder*="输入"], textarea[placeholder*="message"]`) as HTMLTextAreaElement;
@@ -66,9 +66,9 @@ export class QwnCAdapter implements SiteAdapter {
 
   async readResponse(): Promise<string> {
     const now = Date.now();
-    if (this.qwncStart === 0) return '';
+    if (this.qwneStart === 0) return '';
 
-    if (now - this.qwncLastCapture >= 5000) {
+    if (now - this.qwneLastCapture >= 5000) {
       const texts: string[] = [];
       const textSpans = document.querySelectorAll<HTMLElement>('.qwen-markdown-text');
       if (textSpans.length > 0) {
@@ -76,19 +76,19 @@ export class QwnCAdapter implements SiteAdapter {
           const t = s.textContent?.replace(/\s+/g, ' ').trim();
           if (t) texts.push(t);
         }
-        this.qwncContent = texts.join('\n');
+        this.qwneContent = texts.join('\n');
       } else {
         const containers = document.querySelectorAll<HTMLElement>('.response-message-content .custom-qwen-markdown, .response-message-content .qwen-markdown');
         if (containers.length > 0) {
-          this.qwncContent = containers[0].textContent?.replace(/\s+/g, ' ').trim() || '';
+          this.qwneContent = containers[0].textContent?.replace(/\s+/g, ' ').trim() || '';
         }
       }
-      this.qwncLastCapture = now;
+      this.qwneLastCapture = now;
     }
 
-    return this.qwncContent;
+    return this.qwneContent;
   }
 
-  getUploadLimits() { return getLimits('qwnc'); }
+  getUploadLimits() { return getLimits('qwne'); }
 }
 

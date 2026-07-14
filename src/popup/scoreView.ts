@@ -1,10 +1,10 @@
 import { getModelScores } from './promptView';
 import type { ModelScoreEntry } from '../shared/types';
 
-const MODEL_IDS = ['deepseek', 'doubao', 'qwnc', 'glm', 'claude', 'chatgpt', 'grok', 'gemini', 'kimi', 'minimax', 'mimo', 'stepfun', 'hunyuan', 'longcat'];
+const MODEL_IDS = ['deepseek', 'doubao', 'qwne', 'glm', 'claude', 'chatgpt', 'grok', 'gemini', 'kimi', 'minimax', 'mimo', 'stepfun', 'hunyuan', 'longcat'];
 const MODEL_LABELS: Record<string, string> = {
   chatgpt: 'GPT', claude: 'Claud', gemini: 'Gmini', deepseek: 'DSeek', grok: 'Grok',
-  doubao: 'Seed', glm: 'GLM', qwnc: 'QwnC', hunyuan: 'Hy',
+  doubao: 'Seed', glm: 'GLM', qwne: 'Qwne', hunyuan: 'Hy',
   kimi: 'Kimi', minimax: 'Nimax', longcat: 'LCat', stepfun: 'Step', mimo: 'MiMo',
 };
 

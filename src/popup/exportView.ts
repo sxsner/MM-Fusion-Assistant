@@ -8,7 +8,7 @@ const MODEL_LABELS: Record<string, string> = {
   grok: 'Grok',
   doubao: 'Seed',
   glm: 'GLM',
-  qwnc: 'QwnC',
+  qwne: 'Qwne',
   hunyuan: 'Hy',
   kimi: 'Kimi',
   minimax: 'Nimax',
