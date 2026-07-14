@@ -14,7 +14,7 @@ const PROVIDER_OPTIONS = [
 
 const MODEL_LABELS: Record<string, string> = {
   chatgpt: 'GPT', claude: 'Claud', gemini: 'Gmini', deepseek: 'DSeek', grok: 'Grok',
-  doubao: 'Seed', glm: 'GLM', qwne: 'Qwne', hunyuan: 'Hy',
+  doubao: 'Seed', glm: 'GLM', qwne: 'Qwne', qwnc: 'QwnC', hunyuan: 'Hy',
   kimi: 'Kimi', minimax: 'Nimax', longcat: 'LCat', stepfun: 'Step', mimo: 'MiMo',
 };
 
@@ -96,7 +96,7 @@ export class SettingsView {
 
     const colorMap: Record<string, string> = {
       chatgpt: '#10a37f', claude: '#d97757', gemini: '#4285f4', deepseek: '#4f46e5', grok: '#1da1f2',
-      doubao: '#a855f7', glm: '#3b82f6', qwne: '#6366f1', hunyuan: '#0052d9',
+      doubao: '#a855f7', glm: '#3b82f6', qwne: '#6366f1', qwnc: '#8b5cf6', hunyuan: '#0052d9',
       kimi: '#ef4444', minimax: '#f59e0b', longcat: '#14b8a6',
       mimo: '#06b6d4', stepfun: '#84cc16',
     };

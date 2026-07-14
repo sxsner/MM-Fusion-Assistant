@@ -210,6 +210,7 @@ getUploadLimits()                    — 获取上传限制
 | 豆包 | doubao.com | ✅ |
 | 智谱 GLM | chat.z.ai | ✅ |
 | 通义千问 (Qwne) | chat.qwen.ai | ✅ |
+| QwnC | — | ✅ |
 | 腾讯混元 | aistudio.tencent.com | ✅ |
 | Kimi | kimi.com | ✅ |
 | MiniMax | agent.minimaxi.com | ✅ |
