@@ -52,7 +52,7 @@ const limits: Record<ModelId, UploadLimit> = {
     supportedTypes: ['pdf', 'docx', 'txt', 'png', 'jpg', 'jpeg', 'gif', 'webp'],
     notes: '',
   },
-  qwen: {
+  qwnc: {
     maxFiles: 5,
     maxSizeMB: 100,
     supportedTypes: ['pdf', 'docx', 'xlsx', 'txt', 'png', 'jpg', 'jpeg', 'gif', 'webp'],

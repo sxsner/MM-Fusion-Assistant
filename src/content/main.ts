@@ -91,7 +91,7 @@ const processPrompt = async (taskId: string, question: string, attachments: Atta
   const hostToModel: Record<string, string> = {
     'chatgpt.com': 'chatgpt', 'chat.openai.com': 'chatgpt', 'claude.ai': 'claude',
     'gemini.google.com': 'gemini', 'chat.deepseek.com': 'deepseek', 'grok.com': 'grok',
-    'www.doubao.com': 'doubao', 'chat.z.ai': 'glm', 'chat.qwen.ai': 'qwen',
+    'www.doubao.com': 'doubao', 'chat.z.ai': 'glm', 'chat.qwen.ai': 'qwnc',
     'aistudio.tencent.com': 'hunyuan', 'www.kimi.com': 'kimi',
     'agent.minimaxi.com': 'minimax', 'longcat.chat': 'longcat',
     'chat.stepfun.com': 'stepfun',

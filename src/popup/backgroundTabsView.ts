@@ -4,11 +4,11 @@ import { logger } from '../shared/logger';
 
 const MODEL_LABELS: Record<string, string> = {
   chatgpt: 'GPT', claude: 'Claud', gemini: 'Gmini', deepseek: 'DSeek', grok: 'Grok',
-  doubao: 'Seed', glm: 'GLM', qwen: 'Qwen', hunyuan: 'Hy',
+  doubao: 'Seed', glm: 'GLM', qwnc: 'QwnC', hunyuan: 'Hy',
   kimi: 'Kimi', minimax: 'Nimax', longcat: 'LCat', stepfun: 'Step', mimo: 'MiMo',
 };
 
-const ALL_MODELS: ModelType[] = ['chatgpt', 'claude', 'gemini', 'deepseek', 'grok', 'doubao', 'glm', 'qwen', 'hunyuan', 'kimi', 'minimax', 'longcat', 'stepfun', 'mimo'];
+const ALL_MODELS: ModelType[] = ['chatgpt', 'claude', 'gemini', 'deepseek', 'grok', 'doubao', 'glm', 'qwnc', 'hunyuan', 'kimi', 'minimax', 'longcat', 'stepfun', 'mimo'];
 
 interface ModelTabInfo {
   modelId: ModelType;

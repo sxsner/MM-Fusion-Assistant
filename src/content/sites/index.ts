@@ -6,7 +6,7 @@ import { DeepSeekAdapter } from './deepseek';
 import { GrokAdapter } from './grok';
 import { DoubaoAdapter } from './doubao';
 import { GLMAdapter } from './glm';
-import { QwenAdapter } from './qwen';
+import { QwnCAdapter } from './qwnc';
 import { HunyuanAdapter } from './hunyuan';
 import { KimiAdapter } from './kimi';
 import { MiniMaxAdapter } from './minimax';
@@ -23,7 +23,7 @@ const adapters: Record<string, SiteAdapter> = {
   'grok.com': new GrokAdapter(),
   'www.doubao.com': new DoubaoAdapter(),
   'chat.z.ai': new GLMAdapter(),
-  'chat.qwen.ai': new QwenAdapter(),
+  'chat.qwen.ai': new QwnCAdapter(),
   'aistudio.tencent.com': new HunyuanAdapter(),
   'www.kimi.com': new KimiAdapter(),
   'agent.minimaxi.com': new MiniMaxAdapter(),

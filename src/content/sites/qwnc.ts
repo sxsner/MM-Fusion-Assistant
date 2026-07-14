@@ -7,16 +7,15 @@ const SEL_TEXTAREA = 'textarea.message-input-textarea';
 const SEL_STOP = '[class*="stop"], [class*="pause"], [aria-label*="stop"], [aria-label*="停止"]';
 
 
-export class QwenAdapter implements SiteAdapter {
-  // Self-polling: capture full DOM every 5s, update stableContent every time
-  private qwenStart = 0;
-  private qwenContent = '';
-  private qwenLastCapture = 0;
+export class QwnCAdapter implements SiteAdapter {
+  private qwncStart = 0;
+  private qwncContent = '';
+  private qwncLastCapture = 0;
 
   async fillAndSend(question: string, attachments: Attachment[]): Promise<void> {
-    this.qwenStart = Date.now();
-    this.qwenContent = '';
-    this.qwenLastCapture = 0;
+    this.qwncStart = Date.now();
+    this.qwncContent = '';
+    this.qwncLastCapture = 0;
     await waitForElement('.chat-messages, .sidebar, .chat-container');
     await new Promise((r) => setTimeout(r, 1500 + Math.random() * 1500));
     const input = await waitForInput(`${SEL_TEXTAREA}, textarea[class*="input"], textarea[class*="textarea"], textarea[placeholder*="输入"], textarea[placeholder*="message"]`) as HTMLTextAreaElement;
@@ -67,9 +66,9 @@ export class QwenAdapter implements SiteAdapter {
 
   async readResponse(): Promise<string> {
     const now = Date.now();
-    if (this.qwenStart === 0) return '';
+    if (this.qwncStart === 0) return '';
 
-    if (now - this.qwenLastCapture >= 5000) {
+    if (now - this.qwncLastCapture >= 5000) {
       const texts: string[] = [];
       const textSpans = document.querySelectorAll<HTMLElement>('.qwen-markdown-text');
       if (textSpans.length > 0) {
@@ -77,19 +76,19 @@ export class QwenAdapter implements SiteAdapter {
           const t = s.textContent?.replace(/\s+/g, ' ').trim();
           if (t) texts.push(t);
         }
-        this.qwenContent = texts.join('\n');
+        this.qwncContent = texts.join('\n');
       } else {
         const containers = document.querySelectorAll<HTMLElement>('.response-message-content .custom-qwen-markdown, .response-message-content .qwen-markdown');
         if (containers.length > 0) {
-          this.qwenContent = containers[0].textContent?.replace(/\s+/g, ' ').trim() || '';
+          this.qwncContent = containers[0].textContent?.replace(/\s+/g, ' ').trim() || '';
         }
       }
-      this.qwenLastCapture = now;
+      this.qwncLastCapture = now;
     }
 
-    return this.qwenContent;
+    return this.qwncContent;
   }
 
-  getUploadLimits() { return getLimits('qwen'); }
+  getUploadLimits() { return getLimits('qwnc'); }
 }
 

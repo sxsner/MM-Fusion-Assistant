@@ -337,7 +337,7 @@ on('tabs:switchOrOpen', async (payload, _sender, tid) => {
   const { modelId, conversationUrl } = payload as { modelId: string; conversationUrl?: string };
   let ok = await windowManager.switchToTab(modelId as ModelType);
   if (!ok) {
-    const domain = { chatgpt: 'chatgpt.com', claude: 'claude.ai', gemini: 'gemini.google.com', deepseek: 'chat.deepseek.com', grok: 'grok.com', doubao: 'www.doubao.com', glm: 'chat.z.ai', qwen: 'chat.qwen.ai', hunyuan: 'aistudio.tencent.com', kimi: 'www.kimi.com', minimax: 'agent.minimaxi.com', longcat: 'longcat.chat', stepfun: 'chat.stepfun.com', mimo: 'aistudio.xiaomimimo.com' }[modelId];
+    const domain = { chatgpt: 'chatgpt.com', claude: 'claude.ai', gemini: 'gemini.google.com', deepseek: 'chat.deepseek.com', grok: 'grok.com', doubao: 'www.doubao.com', glm: 'chat.z.ai', qwnc: 'chat.qwen.ai', hunyuan: 'aistudio.tencent.com', kimi: 'www.kimi.com', minimax: 'agent.minimaxi.com', longcat: 'longcat.chat', stepfun: 'chat.stepfun.com', mimo: 'aistudio.xiaomimimo.com' }[modelId];
     if (domain) {
       const tabs = await chrome.tabs.query({});
       const existing = tabs.find(t => t.url && t.id && new URL(t.url).hostname === domain);

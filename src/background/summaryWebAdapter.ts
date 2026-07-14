@@ -12,7 +12,7 @@ const NEW_CONVERSATION_URLS: Partial<Record<ModelType, string>> = {
   grok: 'https://grok.com/',
   doubao: 'https://www.doubao.com/chat/',
   glm: 'https://chat.z.ai/',
-  qwen: 'https://chat.qwen.ai/',
+  qwnc: 'https://chat.qwen.ai/',
   hunyuan: 'https://aistudio.tencent.com/',
   kimi: 'https://www.kimi.com/?chat_enter_method=new_chat',
   minimax: 'https://agent.minimaxi.com/',
