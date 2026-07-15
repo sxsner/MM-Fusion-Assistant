@@ -2,7 +2,8 @@
 
 **一次输入，多端并发，聚合对比，智能终审**
 
-一款 Chrome 扩展，向多个 AI 模型同时发送提示词，收集各模型回复并排对比，最终自动生成智能聚合总结。
+一款 Chrome 扩展，向多个大模型的网页端同时发送提示词，收集各模型回复，并指定一个模型进行总结，最终生成聚合总结。
+<img width="360" height="693" alt="image" src="https://github.com/user-attachments/assets/9516d59e-91b7-40bd-b7ce-ed5fa313c5bb" />
 
 ---
 
