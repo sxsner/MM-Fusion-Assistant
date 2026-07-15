@@ -74,9 +74,13 @@ export class ChatGPTAdapter implements SiteAdapter {
   }
 
   async readResponse(): Promise<string> {
-    const containers = document.querySelectorAll<HTMLElement>('[data-message-author-role="assistant"]');
-    if (containers.length > 0) {
-      return containers[containers.length - 1].textContent?.replace(/\s+/g, ' ').trim() || '';
+    const selectors = ['[data-message-author-role="assistant"]', '.markdown.prose', '.result-streaming', '[class*="markdown-new-styling"]'];
+    for (const sel of selectors) {
+      const els = document.querySelectorAll<HTMLElement>(sel);
+      if (els.length > 0) {
+        const text = els[els.length - 1].textContent?.replace(/\s+/g, ' ').trim() || '';
+        if (text && text.length > 5) return text;
+      }
     }
     return '';
   }

@@ -379,7 +379,7 @@ export class SettingsView {
     const ftTitle = document.createElement('b');
     ftTitle.textContent = '使用说明';
     foot.appendChild(ftTitle);
-    for (const note of ['1. 尽量只提一轮（1个问题+1个回答）再汇总，太多容易崩', '2. 文件上传功能不要用，没做好', '3. 历史功能也没做好']) {
+    for (const note of ['1. 尽量只提一轮（1个问题+1个回答）再汇总，太多容易崩', '2. 文件上传功能不要用，没做好', '3. 历史功能也没做好', '4. 日常使用建议6-7个就可以了', '5. mimo窗口管理经常性失效，是mimo网址匹配的问题，如果觉得麻烦建议不要用mimo，其他模型测试都正常']) {
       foot.appendChild(document.createElement('br'));
       foot.appendChild(document.createTextNode(note));
     }

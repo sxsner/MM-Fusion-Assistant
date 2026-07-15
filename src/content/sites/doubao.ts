@@ -320,6 +320,8 @@ function pressEnter(input: HTMLTextAreaElement): void {
   }));
 }
 
+const RETRY_SVG = 'M2.79292 9.79297';
+
 export class DoubaoAdapter implements SiteAdapter {
   async fillAndSend(question: string, attachments: Attachment[]): Promise<void> {
     const input = await waitForInput(SEL_TEXTAREA) as HTMLTextAreaElement;
@@ -340,6 +342,19 @@ export class DoubaoAdapter implements SiteAdapter {
       await new Promise((r) => setTimeout(r, 500));
       pressEnter(input);
     }
+  }
+
+  async retryIfNeeded(): Promise<boolean> {
+    const btns = document.querySelectorAll<HTMLElement>('button');
+    for (const btn of btns) {
+      const path = btn.querySelector('svg path');
+      if (path && (path.getAttribute('d') || '').startsWith(RETRY_SVG)) {
+        dbg('点击重新生成按钮');
+        btn.click();
+        return true;
+      }
+    }
+    return false;
   }
 
   async uploadFiles(files: Attachment[]): Promise<string[]> {
@@ -393,19 +408,21 @@ export class DoubaoAdapter implements SiteAdapter {
   }
 
   async readResponse(): Promise<string> {
-    const PREFIX_MARKER = '在保证正确性的前提下';
-    const pick = (els: NodeListOf<HTMLElement>): string => {
-      let best = '';
-      for (const el of els) {
-        const txt = el.textContent?.replace(/\s+/g, ' ').trim() || '';
-        if (txt.length > best.length && !txt.includes(PREFIX_MARKER)) best = txt;
+    const Q_PREFIX = '在保证正确性的前提下';
+    const collectLast = (els: NodeListOf<HTMLElement>): string => {
+      const parts: string[] = [];
+      for (let i = els.length - 1; i >= 0; i--) {
+        const txt = els[i].textContent?.replace(/\s+/g, ' ').trim() || '';
+        if (txt.includes(Q_PREFIX)) break;
+        if (txt) parts.push(txt);
       }
-      return best;
+      return parts.reverse().join('\n');
     };
-    const r1 = pick(document.querySelectorAll<HTMLElement>('[data-streaming="false"].md-box-root'));
+    const r1 = collectLast(document.querySelectorAll<HTMLElement>('[data-streaming="false"].md-box-root'));
     if (r1.length > 5) return r1;
-    const r2 = pick(document.querySelectorAll<HTMLElement>('[data-streaming="false"]'));
+    const r2 = collectLast(document.querySelectorAll<HTMLElement>('[data-streaming="false"]'));
     if (r2.length > 5) return r2;
+    await this.retryIfNeeded();
     return '';
   }
 

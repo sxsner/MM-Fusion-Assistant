@@ -55,7 +55,7 @@ export class ScoreView {
   private table: HTMLTableElement;
   private tbody: HTMLTableSectionElement;
   private headers: HTMLTableCellElement[] = [];
-  private sortKey: SortKey = 'model';
+  private sortKey: SortKey = 'avg';
   private sortAsc = false;
   private logPanel: HTMLDivElement;
   private logList: HTMLDivElement;
@@ -194,6 +194,12 @@ export class ScoreView {
 
     this.render();
     this.renderLog();
+    chrome.storage.onChanged.addListener((changes) => {
+      if (changes.modelScores || changes.modelScoreLog) {
+        this.render();
+        this.renderLog();
+      }
+    });
   }
 
   private async exportData(): Promise<void> {

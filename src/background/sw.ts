@@ -79,7 +79,7 @@ on('grok:fill', async (payload, sender, tid) => {
       world: 'MAIN',
       args: [text],
       func: (txt: string) => {
-        const el = document.querySelector<HTMLElement>('[data-testid="chat-input"] [contenteditable="true"]');
+        const el = document.querySelector<HTMLElement>('[data-testid="chat-input"] [contenteditable="true"], [contenteditable="true"][role="textbox"], form [contenteditable="true"]');
         if (!el) return;
         el.focus();
         const dt = new DataTransfer();
@@ -144,17 +144,6 @@ on('task:submit', async (payload, _sender, tid) => {
   }
   responseAggregator.onAllCompleted(taskId, async () => {
     const results = responseAggregator.getAllResults(taskId);
-    const deepseekLen = results['deepseek']?.content?.length || 0;
-    if (deepseekLen > 0) {
-      const minLen = deepseekLen * 0.4;
-      for (const [mid, r] of Object.entries(results)) {
-        if (r && r.content && r.content.length < minLen) {
-          logger.warn('SW', tid, `${mid}: 内容过短(${r.content.length}字 < ${minLen.toFixed(0)}字)，标为无效`);
-          r.content = '';
-          r.status = 'failed';
-        }
-      }
-    }
     task.results = results;
     task.status = 'completed';
     task.updatedAt = Date.now();
@@ -411,7 +400,7 @@ on('summary:generate', async (payload, _sender, tid) => {
 
   if (mode === 'web') {
     const webAdapter = new SummaryWebAdapter(windowManager);
-    const modelId = settings.webModelId || 'chatgpt';
+    const modelId = settings.webModelId || 'deepseek';
     try {
       const result = await webAdapter.summarizeViaWeb(modelId, { content: formattedContent, fileName: 'summary-input.md' }, () => {});
       logger.info(MODULE, tid, `汇总完成 ${result.length}字 ${((Date.now()-t0)/1000).toFixed(1)}s`);
@@ -472,16 +461,10 @@ on('summary:score', async (payload, _sender, tid) => {
 
   let results: Record<string, { modelId: string; content: string; status: string }> = {};
   const allData = await chrome.storage.local.get(null);
-  const scoredSet: string[] = allData['scoredSummaries'] || [];
   const summaryKeys = Object.keys(allData).filter(k => k.startsWith('summary:'));
   if (summaryKeys.length > 0) {
     const latestKey = summaryKeys.sort((a, b) => (allData[b]?.createdAt || 0) - (allData[a]?.createdAt || 0))[0];
-    if (scoredSet.includes(latestKey)) {
-      return success({ success: false, error: '本轮数据已评分，请先发送新问题再评分' }, tid);
-    }
     results = allData[latestKey]?.results || {};
-    scoredSet.push(latestKey);
-    await chrome.storage.local.set({ scoredSummaries: scoredSet });
   }
 
   if (Object.keys(results).length === 0) {
@@ -490,12 +473,14 @@ on('summary:score', async (payload, _sender, tid) => {
       try {
         const res = await chrome.tabs.sendMessage(tab.tabId, { channel: 'GET_RESPONSE', trace_id: tid });
         if (res?.data?.content) results[tab.modelId] = { modelId: tab.modelId, content: res.data.content, status: 'completed' };
-      } catch { /* tab not ready */ }
+        else results[tab.modelId] = { modelId: tab.modelId, content: '', status: 'no_content' };
+      } catch { results[tab.modelId] = { modelId: tab.modelId, content: '', status: 'tab_closed' }; }
     }
   }
 
-  if (Object.keys(results).length === 0) {
-    return success({ success: false, error: '没有可评分的数据，请先完成一次多模型对话' }, tid);
+  const ALL_MODELS = ['deepseek', 'doubao', 'qwne', 'qwnc', 'claude', 'chatgpt', 'grok', 'gemini', 'glm', 'kimi', 'minimax', 'mimo', 'stepfun', 'hunyuan', 'longcat'];
+  for (const mid of ALL_MODELS) {
+    if (!results[mid]) results[mid] = { modelId: mid, content: '', status: 'no_response' };
   }
 
   const scoreInstruction = await getScorePrompt();
@@ -504,7 +489,7 @@ on('summary:score', async (payload, _sender, tid) => {
 
   if (mode === 'web') {
     const webAdapter = new SummaryWebAdapter(windowManager);
-    const modelId = settings.webModelId || 'chatgpt';
+    const modelId = settings.webModelId || 'deepseek';
     try {
       const result = await webAdapter.summarizeViaWeb(modelId, { content: formattedContent, fileName: 'summary-input.md' }, () => {});
       logger.info(MODULE, tid, `评分完成 ${result.length}字 ${((Date.now()-t0)/1000).toFixed(1)}s`);

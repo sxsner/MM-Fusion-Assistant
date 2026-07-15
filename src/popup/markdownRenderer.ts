@@ -13,6 +13,9 @@ marked.use({
       const langClass = lang ? ` language-${lang}` : '';
       return `<pre><code class="hljs${langClass}">${highlighted}</code></pre>`;
     },
+    html(html: string): string {
+      return html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    },
   },
 });
 
@@ -20,7 +23,7 @@ export class MarkdownRenderer {
   render(markdown: string): string {
     const raw = marked.parse(markdown);
     const html = typeof raw === 'string' ? raw : '';
-    return DOMPurify.sanitize(html);
+    return DOMPurify.sanitize(html, { FORBID_TAGS: ['style'] });
   }
 
   appendStream(existing: string, incoming: string): string {

@@ -100,8 +100,16 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) { logger.warn('POPUP', crypto.randomUUID(), 'restoreSession failed: ' + (err instanceof Error ? err.message : String(err))); }
   }
 
+  const modelStatuses: Record<string, string> = {};
+  for (const m of MODEL_IDS as ModelType[]) modelStatuses[m] = 'pending';
+  const STATUS_BORDER_COLORS: Record<string, string> = {
+    pending: 'var(--color-border)',
+    generating: '#FFA500',
+    done: '#4CAF50',
+    error: '#F44336',
+  };
   const style = document.createElement('style');
-  style.textContent = '@keyframes dot-blink { 0%,100% { opacity:1; } 50% { opacity:.3; } }';
+  style.textContent = '@keyframes border-blink { 0%,100% { border-color:#FFA500; } 50% { border-color:transparent; } }';
   document.head.appendChild(style);
 
   const tabButtons: Record<string, HTMLDivElement> = {};
@@ -179,6 +187,19 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedModels: ModelType[] = [];
   let activeModelTag: string | null = null;
 
+  function applyTagBorder(tag: HTMLElement, status: string, isActive: boolean): void {
+    const color = STATUS_BORDER_COLORS[status] || 'var(--color-border)';
+    if (isActive) {
+      tag.style.borderColor = color;
+    } else if (status === 'generating') {
+      tag.style.borderColor = '#FFA500';
+      tag.style.animation = 'border-blink 1.2s infinite';
+    } else {
+      tag.style.borderColor = color;
+      tag.style.animation = 'none';
+    }
+  }
+
   function updateModelTags(): void {
     modelTagsRow.innerHTML = '';
     const allModels: ModelType[] = selectedModels.length > 0
@@ -186,16 +207,19 @@ document.addEventListener('DOMContentLoaded', () => {
       : MODEL_IDS as ModelType[];
     for (const m of allModels) {
       const isActive = m === activeModelTag;
+      const status = modelStatuses[m] || 'pending';
       const tag = document.createElement('div');
       tag.dataset.modelId = m;
       tag.style.cssText = [
         'padding:0 4px',
         'font-family:var(--font-sans)', 'font-size:var(--font-size-sm)',
         'cursor:pointer', 'user-select:none',
-        'border:1px solid var(--color-border)', 'border-radius:2px',
-        isActive ? 'background:#EE1C25;color:#FFCC00;border-color:#EE1C25;' : 'background:var(--color-surface);color:var(--color-text-secondary);',
+        'border:2px solid var(--color-border)', 'border-radius:2px',
+        isActive ? 'background:#EE1C25;color:#FFCC00;' : 'background:var(--color-surface);color:var(--color-text-secondary);',
         'display:inline-flex', 'align-items:center',
+        'transition:border-color .2s',
       ].join(';');
+      applyTagBorder(tag, status, isActive);
       const txt = document.createElement('span');
       txt.textContent = MODEL_LABELS[m] || m;
       tag.appendChild(txt);
@@ -203,10 +227,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function setModelStatus(_modelId: string, _status: string): void {
+  function setModelStatus(modelId: string, status: string): void {
+    modelStatuses[modelId] = status;
+    const tag = modelTagsRow.querySelector(`[data-model-id="${modelId}"]`) as HTMLElement | null;
+    if (tag) { applyTagBorder(tag, status, modelId === activeModelTag); return; }
+    updateModelTags();
   }
   let unsubscribeModels: (() => void) | undefined;
-  modelStore.getSelectedModels().then((models) => { selectedModels = models; activeModelTag = models.length > 0 ? models[0] : null; updateModelTags(); resultsGrid.showOnly(activeModelTag as ModelType | null); }).catch((err) => {
+  modelStore.getSelectedModels().then((models) => { selectedModels = models; activeModelTag = (models.length > 0 ? models : MODEL_IDS as ModelType[])[0]; updateModelTags(); resultsGrid.showOnly(activeModelTag as ModelType | null); }).catch((err) => {
     logger.error('POPUP', crypto.randomUUID(), 'Failed to load selected models: ' + (err instanceof Error ? err.message : String(err)));
   });
   unsubscribeModels = modelStore.onChange((models) => { selectedModels = models; if (models.length > 0 && !models.includes(activeModelTag as ModelType)) activeModelTag = models[0]; else if (models.length === 0) activeModelTag = null; updateModelTags(); });
@@ -240,20 +268,22 @@ document.addEventListener('DOMContentLoaded', () => {
     updateModelTags();
     saveSession();
   });
+  composerView.onActivate(async () => {
+    const models = selectedModels.length > 0 ? selectedModels : MODEL_IDS as ModelType[];
+    for (const m of models) {
+      try {
+        await chrome.runtime.sendMessage({ channel: 'tabs:open', payload: { modelId: m } });
+        await new Promise((r) => setTimeout(r, 1500));
+      } catch {}
+    }
+  });
   composerView.onSync(() => {
     const skipModels = Object.keys(currentResults).filter((m) => (currentResults as any)[m]?.content);
     chrome.runtime.sendMessage({ channel: 'popup:sync', payload: { skipModels }, trace_id: crypto.randomUUID() }).then((res: any) => {
       if (res?.data?.results) {
         currentResults = res.data.results;
-        const dsLen = (currentResults as any)['deepseek']?.content?.length || 0;
         for (const [modelId, result] of Object.entries(currentResults)) {
-          if (isModelResult(result)) {
-            if (dsLen > 0 && result.content && result.content.length < dsLen * 0.4) {
-              logger.warn('POPUP', crypto.randomUUID(), `${modelId}: 同步内容过短(${result.content.length}字 < ${Math.round(dsLen * 0.4)}字)，跳过`);
-              continue;
-            }
-            handleModelResult(modelId, result);
-          }
+          if (isModelResult(result)) handleModelResult(modelId, result);
         }
       }
     }).catch((err) => { logger.warn('POPUP', crypto.randomUUID(), 'sync failed: ' + (err instanceof Error ? err.message : String(err))); });
@@ -274,15 +304,8 @@ document.addEventListener('DOMContentLoaded', () => {
   chrome.runtime.sendMessage({ channel: 'popup:sync', payload: { skipModels }, trace_id: crypto.randomUUID() }).then((res: any) => {
     if (res?.data?.results) {
       currentResults = res.data.results;
-      const dsLen = (currentResults as any)['deepseek']?.content?.length || 0;
       for (const [modelId, result] of Object.entries(currentResults)) {
-        if (isModelResult(result)) {
-          if (dsLen > 0 && result.content && result.content.length < dsLen * 0.4) {
-            logger.warn('POPUP', crypto.randomUUID(), `${modelId}: 同步内容过短(${result.content.length}字 < ${Math.round(dsLen * 0.4)}字)，跳过`);
-            continue;
-          }
-          handleModelResult(modelId, result);
-        }
+        if (isModelResult(result)) handleModelResult(modelId, result);
       }
     }
   }).catch((err) => { logger.warn('POPUP', crypto.randomUUID(), 'init sync failed: ' + (err instanceof Error ? err.message : String(err))); });
@@ -373,7 +396,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (result.content) resultsGrid.updateContent(modelId, result.content);
     if (result.error) {
       setModelStatus(modelId, 'error');
-      resultsGrid.updateContent(modelId, result.error);
+    } else if (result.content && (modelId === 'glm' || modelId === 'qwne')) {
+      setModelStatus(modelId, 'done');
     } else if (result.status === 'completed') {
       setModelStatus(modelId, 'done');
     } else if (result.status === 'generating') {

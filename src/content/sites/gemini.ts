@@ -66,12 +66,7 @@ export class GeminiAdapter implements SiteAdapter {
   }
 
   async readResponse(): Promise<string> {
-    const PREFIX_MARKER = '在保证正确性的前提下';
     const panels = document.querySelectorAll<HTMLElement>('.markdown-main-panel, message-content .markdown, structured-content-container.model-response-text .markdown');
-    for (let i = panels.length - 1; i >= 0; i--) {
-      const text = panels[i].textContent?.replace(/\s+/g, ' ').trim() || '';
-      if (text && text.length > 5 && !text.includes(PREFIX_MARKER)) return text;
-    }
     for (let i = panels.length - 1; i >= 0; i--) {
       const text = panels[i].textContent?.replace(/\s+/g, ' ').trim() || '';
       if (text && text.length > 5) return text;

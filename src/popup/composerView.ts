@@ -29,6 +29,7 @@ export class ComposerView {
   private clearCallback?: () => void;
   private syncCallback?: () => void;
   private sendCallback?: (taskId: string) => void;
+  private activateCallback?: () => Promise<void>;
   private syncTimer?: ReturnType<typeof setTimeout>; // [BUG-FIX] B-008 - 保存 setTimeout ID 用于销毁时清除
   private ac: AbortController; // [BUG-FIX] B-006 - 添加 AbortController 生命周期管理
 
@@ -118,6 +119,20 @@ export class ComposerView {
       this.syncTimer = setTimeout(() => { syncCooldown = false; syncBtn.style.opacity = '1'; syncBtn.style.cursor = 'pointer'; }, 2000); // [BUG-FIX] B-008 - 保存 timeout ID
     }, { signal: this.ac.signal }); // [BUG-FIX] B-006 - AbortController signal
 
+    const activateBtn = document.createElement('button');
+    activateBtn.textContent = '依次激活';
+    activateBtn.title = '逐个激活模型窗口到前台';
+    activateBtn.style.cssText = btnStyle({ background: 'var(--color-surface)', color: 'var(--color-text-secondary)' });
+    let activating = false;
+    activateBtn.addEventListener('click', async () => {
+      if (activating) return;
+      activating = true;
+      activateBtn.style.opacity = '0.5';
+      activateBtn.style.cursor = 'default';
+      if (this.activateCallback) await this.activateCallback();
+      activating = false;
+    }, { signal: this.ac.signal });
+
     const btnRow = document.createElement('div');
     btnRow.style.cssText = 'display:flex;gap:4px;align-items:center;margin-top:4px;';
 
@@ -128,6 +143,7 @@ export class ComposerView {
     btnRow.appendChild(this.fileInput);
     btnRow.appendChild(this.sendBtn);
     btnRow.appendChild(this.clearBtn);
+    btnRow.appendChild(activateBtn);
     btnRow.appendChild(closeAllBtn);
     btnRow.appendChild(syncBtn);
     wrapper.appendChild(btnRow);
@@ -141,6 +157,10 @@ export class ComposerView {
 
   onClear(callback: () => void): void {
     this.clearCallback = callback;
+  }
+
+  onActivate(callback: () => Promise<void>): void {
+    this.activateCallback = callback;
   }
 
   onSync(callback: () => void): void {

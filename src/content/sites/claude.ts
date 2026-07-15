@@ -1,6 +1,6 @@
 import type { SiteAdapter, Attachment } from './types';
 import { FileUploadHelpers } from '../fileUploadHelpers';
-import { waitForInput } from './adapter-utils';
+import { waitForInput, waitForElement } from './adapter-utils';
 
 export class ClaudeAdapter implements SiteAdapter {
   async fillAndSend(question: string, _attachments: Attachment[]): Promise<void> {
@@ -11,10 +11,16 @@ export class ClaudeAdapter implements SiteAdapter {
     const input = await waitForInput('[data-testid="chat-input"], [contenteditable="true"]') as HTMLElement;
     input.focus();
     await chrome.runtime.sendMessage({ channel: 'claude:fill', payload: { text: question } });
-    await new Promise((r) => setTimeout(r, 1000));
-    const sendBtn = document.querySelector<HTMLElement>('button[aria-label="Send message"]');
-    if (sendBtn && !sendBtn.hasAttribute('disabled')) {
-      sendBtn.click();
+    let sendBtn: HTMLElement | null = null;
+    try {
+      sendBtn = await waitForElement('button[aria-label="Send message"]:not([disabled]):not([data-trigger-disabled])', 15000) as HTMLElement;
+    } catch { /* send button timeout */ }
+    if (sendBtn) {
+      sendBtn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 0 }));
+      sendBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }));
+      sendBtn.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, button: 0 }));
+      sendBtn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, button: 0 }));
+      sendBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 }));
     } else {
       input.dispatchEvent(new KeyboardEvent('keydown', {
         key: 'Enter', code: 'Enter', keyCode: 13, which: 13,

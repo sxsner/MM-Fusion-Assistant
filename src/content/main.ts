@@ -7,6 +7,7 @@ import { setInputDelay, setSendDelay } from './sites/adapter-utils';
 
 const MODULE = 'CS';
 const traceId = crypto.randomUUID();
+console.info('[CS]', traceId, 'content script loaded, hostname:', window.location.hostname);
 
 /** Per-batch dedup: key = taskId_batchIndex */
 const processedBatches = new Set<string>();
@@ -60,6 +61,7 @@ const processPrompt = async (taskId: string, question: string, attachments: Atta
   } else {
     hasModelUI = true;
   }
+  console.info('[CS]', tid, `frame 检测: ${hostname} hasModelUI=${hasModelUI} readyState=${document.readyState}`);
   logger.debug(MODULE, tid, `frame 检测: ${hostname} hasModelUI=${hasModelUI} readyState=${document.readyState}`);
   if (!hasModelUI) {
     logger.debug(MODULE, tid, `当前 frame 没有 ${hostname} 的 UI 元素，跳过处理`);
@@ -97,15 +99,19 @@ const processPrompt = async (taskId: string, question: string, attachments: Atta
   let generated = false;
   let stableContent = '';
   let stableSince = 0;
+  let growStableSince = 0;
+  let lastLen = 0;
   const start = Date.now();
   let adapterErrors = 0;
-  while (Date.now() - start < 180000) {
+  let contentGrace = 0;
+  while (Date.now() - start < 180000 + contentGrace) {
     await new Promise((r) => setTimeout(r, 500));
     const generating = await adapter.isGenerating().catch(() => false);
-    if (generating && !generated) { generated = true; stableContent = ''; stableSince = 0; }
+    if (generating && !generated) { generated = true; stableContent = ''; stableSince = 0; growStableSince = 0; lastLen = 0; }
+    if (generating) { stableSince = Date.now(); growStableSince = Date.now(); }
     if (!generated && Date.now() - start > 5000) {
       const current = (await adapter.readResponse().catch(() => '')).trim();
-      if (current && current !== baseline) { stableContent = current; stableSince = Date.now(); generated = true; }
+      if (current && current !== baseline) { stableContent = current; stableSince = Date.now(); growStableSince = Date.now(); lastLen = current.length; generated = true; contentGrace = 60000; }
     }
     let reply: string;
     try { reply = await adapter.readResponse(); adapterErrors = 0; } catch {
@@ -120,11 +126,19 @@ const processPrompt = async (taskId: string, question: string, attachments: Atta
       if (trimmed.length > 20 && trimmed.includes(qHead)) {
         logger.debug(MODULE, tid, `${modelId}: 内容含提问前缀，跳过`);
       } else {
+        if (!contentGrace) contentGrace = 60000;
         stableContent = trimmed; stableSince = Date.now();
+        if (trimmed.length !== lastLen) { lastLen = trimmed.length; growStableSince = Date.now(); }
+        chrome.runtime.sendMessage({ channel: 'model:result', trace_id: tid, payload: { taskId, modelId, content: trimmed, conversationUrl: window.location.href } }).catch(() => {});
       }
     }
+    const stillGenerating = await adapter.isGenerating().catch(() => false);
     const stableFor = Date.now() - stableSince;
-    if (stableContent && stableFor > 5000) {
+    const growStableFor = Date.now() - growStableSince;
+    const canFinalize = stableFor > 5000 && !stillGenerating;
+    const forceFinalize = stableContent && growStableFor > 10000 && !stillGenerating;
+    const panicFinalize = stableContent && stableFor > 30000;
+    if (stableContent && (canFinalize || forceFinalize || panicFinalize)) {
       let conversationUrl = window.location.href;
       const urlCheck = Date.now();
       while (Date.now() - urlCheck < 5000) { const cur = window.location.href; if (cur !== conversationUrl) { conversationUrl = cur; break; } await new Promise((r) => setTimeout(r, 200)); }
@@ -138,8 +152,13 @@ const processPrompt = async (taskId: string, question: string, attachments: Atta
     }
   }
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-  logger.warn(MODULE, tid, `✗ ${modelId} 超时 ${elapsed}s`);
-  chrome.runtime.sendMessage({ channel: 'model:result', trace_id: tid, payload: { taskId, modelId, error: '超时' } }).catch(() => {});
+  if (stableContent) {
+    chrome.runtime.sendMessage({ channel: 'model:result', trace_id: tid, payload: { taskId, modelId, content: stableContent, conversationUrl: window.location.href, final: true } }).catch(() => {});
+    logger.warn(MODULE, tid, `✗ ${modelId} 超时 ${elapsed}s，已提交 ${stableContent.length} 字`);
+  } else {
+    logger.warn(MODULE, tid, `✗ ${modelId} 超时 ${elapsed}s`);
+    chrome.runtime.sendMessage({ channel: 'model:result', trace_id: tid, payload: { taskId, modelId, error: '超时' } }).catch(() => {});
+  }
 };
 
 /** [BUG-FIX] F7+F15 - 提取 listener 引用以便移除 */
@@ -168,6 +187,7 @@ const onBackgroundMessage = (
     const { taskId, question, attachments, batchIndex = 0, totalBatches = 1, startNew } = msg.payload;
     document.body.dataset.startNew = String(startNew !== false);
     sendCounter++;
+    console.info('[CS]', tid, `SEND_PROMPT #${sendCounter}: taskId=${taskId.slice(0, 8)} batch=${batchIndex}/${totalBatches}`);
     logger.info(MODULE, tid, `SEND_PROMPT #${sendCounter}: taskId=${taskId.slice(0, 8)} batch=${batchIndex}/${totalBatches} 附件=${attachments?.length || 0}`);
 
     const batchKey = `${taskId}_${batchIndex}`;
@@ -277,7 +297,7 @@ const onSummaryMessage = (
       if (uploaded.length > 0) {
         await adapter.fillAndSend('', []);
       } else {
-        await adapter.fillAndSend(content, []);
+        throw new Error('文件上传失败，不支持文件上传的模型无法进行汇总/评分');
       }
 
       let generated = false;

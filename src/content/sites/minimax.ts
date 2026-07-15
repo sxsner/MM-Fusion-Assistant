@@ -10,11 +10,16 @@ const SEL_STOP = ['.streaming-cursor', '.streaming-content'];
 
 export class MiniMaxAdapter implements SiteAdapter {
   async fillAndSend(question: string, attachments: Attachment[]): Promise<void> {
+    const tid = crypto.randomUUID();
+    logger.info('MINIMAX', tid, `等待输入元素: ${SEL_TEXTAREA}`);
     const input = await waitForInput(SEL_TEXTAREA) as HTMLElement;
+    logger.info('MINIMAX', tid, '输入元素已找到');
     let text = question;
     if (attachments.length > 0) {
+      logger.info('MINIMAX', tid, `处理 ${attachments.length} 个附件`);
       const uploaded = await this.uploadFiles(attachments);
       if (uploaded.length === 0) {
+        logger.info('MINIMAX', tid, '文件上传失败，嵌入文本内容');
         const decoder = new TextDecoder();
         const contents = attachments.map((a) => {
           const bytes = Uint8Array.from(atob(a.data), (c) => c.charCodeAt(0));
@@ -25,10 +30,14 @@ export class MiniMaxAdapter implements SiteAdapter {
       }
     }
     setContentEditableValue(input, text);
+    logger.info('MINIMAX', tid, '文本已填充');
     await new Promise((r) => setTimeout(r, 1000));
     try {
+      logger.info('MINIMAX', tid, '等待发送按钮');
       await waitAndClick(SEL_SEND);
+      logger.info('MINIMAX', tid, '发送按钮已点击');
     } catch {
+      logger.info('MINIMAX', tid, '发送按钮不可用，使用 Enter 键');
       (input as HTMLElement).dispatchEvent(new KeyboardEvent('keydown', {
         key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true,
       }));
@@ -59,17 +68,21 @@ export class MiniMaxAdapter implements SiteAdapter {
   }
 
   async readResponse(): Promise<string> {
-    const skipWords = ['思考', '抓取', '搜索', '在保证正确性的前提下'];
-    const valid = (text: string) => text && text.length > 10 && !skipWords.some(w => text.includes(w));
-    const mk = document.querySelectorAll<HTMLElement>('.matrix-markdown, [class*="matrix-markdown"]');
-    for (let i = mk.length - 1; i >= 0; i--) {
-      const text = mk[i].textContent?.replace(/\s+/g, ' ').trim() || '';
-      if (valid(text)) return text;
-    }
-    const containers = document.querySelectorAll<HTMLElement>('[data-testid="mavis-home-content"] .matrix-markdown, [data-testid="mavis-home-content"] [class*="message"], .message-content');
-    for (let i = containers.length - 1; i >= 0; i--) {
-      const text = containers[i].textContent?.replace(/\s+/g, ' ').trim() || '';
-      if (valid(text)) return text;
+    const items = document.querySelectorAll<HTMLElement>('[data-testid="message-item"]');
+    for (let i = items.length - 1; i >= 0; i--) {
+      const activeFlow = items[i].querySelector<HTMLElement>('[data-testid="assistant-active-flow"]');
+      if (!activeFlow) continue;
+      const clone = activeFlow.cloneNode(true) as HTMLElement;
+      clone.querySelectorAll('[data-testid="message-actions"], [class*="message-actions"]').forEach((el) => el.remove());
+      const mk = clone.querySelectorAll<HTMLElement>('.matrix-markdown, [class*="matrix-markdown"]');
+      if (mk.length === 0) continue;
+      const texts: string[] = [];
+      for (let j = 0; j < mk.length; j++) {
+        const t = mk[j].textContent?.replace(/\s+/g, ' ').trim();
+        if (t) texts.push(t);
+      }
+      const joined = texts.join('\n').trim();
+      if (joined && joined.length > 10) { logger.info('MINIMAX', 'read', `回复 ${joined.length} 字`); return joined; }
     }
     return '';
   }

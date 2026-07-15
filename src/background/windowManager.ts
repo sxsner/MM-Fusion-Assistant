@@ -326,11 +326,16 @@ export class WindowManager {
       if (!tab.id || !tab.url) continue;
       try {
         const hostname = new URL(tab.url).hostname;
+        let matched = false;
         for (const domain of Object.values(MODEL_DOMAINS)) {
-          if (hostname === domain || hostname.endsWith('.' + domain)) {
-            try { await chrome.tabs.remove(tab.id); } catch {}
-            break;
-          }
+          if (hostname === domain || hostname.endsWith('.' + domain)) { matched = true; break; }
+        }
+        if (!matched && tab.title) {
+          const title = tab.title.toLowerCase();
+          if (title.includes('mimo') || title.includes('xiaomi')) matched = true;
+        }
+        if (matched) {
+          try { await chrome.tabs.remove(tab.id); } catch {}
         }
       } catch { /* invalid URL */ }
     }

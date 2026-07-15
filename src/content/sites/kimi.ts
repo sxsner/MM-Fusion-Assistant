@@ -10,11 +10,16 @@ const SEL_STOP = '.send-button-container.stop';
 
 export class KimiAdapter implements SiteAdapter {
   async fillAndSend(question: string, attachments: Attachment[]): Promise<void> {
+    const tid = crypto.randomUUID();
+    logger.info('KIMI', tid, `等待输入元素: ${SEL_TEXTAREA}`);
     const input = await waitForInput(SEL_TEXTAREA) as HTMLElement;
+    logger.info('KIMI', tid, '输入元素已找到');
     let text = question;
     if (attachments.length > 0) {
+      logger.info('KIMI', tid, `处理 ${attachments.length} 个附件`);
       const uploaded = await this.uploadFiles(attachments);
       if (uploaded.length === 0) {
+        logger.info('KIMI', tid, '文件上传失败，嵌入文本内容');
         const decoder = new TextDecoder();
         const contents = attachments.map((a) => {
           const bytes = Uint8Array.from(atob(a.data), (c) => c.charCodeAt(0));
@@ -25,10 +30,14 @@ export class KimiAdapter implements SiteAdapter {
       }
     }
     setContentEditableValue(input, text);
+    logger.info('KIMI', tid, '文本已填充');
     await new Promise((r) => setTimeout(r, 1000));
     try {
+      logger.info('KIMI', tid, '等待发送按钮');
       await waitAndClick(SEL_SEND);
+      logger.info('KIMI', tid, '发送按钮已点击');
     } catch {
+      logger.info('KIMI', tid, '发送按钮不可用，使用 Enter 键');
       (input as HTMLElement).dispatchEvent(new KeyboardEvent('keydown', {
         key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true,
       }));
@@ -56,29 +65,22 @@ export class KimiAdapter implements SiteAdapter {
   }
 
   async readResponse(): Promise<string> {
-    // Only assistant response containers, skip user messages
-    const marks = document.querySelectorAll<HTMLElement>('.segment-assistant .markdown-container .markdown, .segment-assistant .markdown-body, .segment-assistant [class*="message-content"] .markdown');
-    for (let i = marks.length - 1; i >= 0; i--) {
-      const text = marks[i].textContent?.replace(/\s+/g, ' ').trim();
-      if (text && text.length > 5) return text;
-    }
-    // Fallback: general assistant selectors
-    const assistantSelectors = ['.segment-assistant', '[class*="assistant"]', '[class*="message-content"]', '[class*="chat-content"] [class*="content"]'];
-    for (const sel of assistantSelectors) {
-      const containers = document.querySelectorAll<HTMLElement>(sel);
-      if (containers.length > 0) {
-        for (let i = containers.length - 1; i >= 0; i--) {
-          if (containers[i].closest('[class*="think"], [class*="reason"], [class*="thought"]')) continue;
-          const raw = containers[i].textContent?.replace(/\s+/g, ' ').trim() || '';
-          const thinkMarkers = ['已思考完成', '思考中', '思考过程', '推理过程'];
-          let cleanText = raw;
-          for (const marker of thinkMarkers) {
-            const idx = cleanText.lastIndexOf(marker);
-            if (idx >= 0) cleanText = cleanText.substring(idx + marker.length).trim();
-          }
-          if (cleanText) return cleanText;
-        }
+    const THINKING_SEL = '[class*="thinking-container"], [class*="toolcall-container"], [class*="think"], [class*="reason"]';
+    const pickFirst = (els: NodeListOf<HTMLElement>, label: string): string => {
+      for (let i = els.length - 1; i >= 0; i--) {
+        const clone = els[i].cloneNode(true) as HTMLElement;
+        clone.querySelectorAll(THINKING_SEL).forEach((el) => el.remove());
+        const text = clone.textContent?.replace(/\s+/g, ' ').trim();
+        if (text && text.length > 5) { logger.info('KIMI', 'read', `回复 ${text.length} 字 (${label})`); return text; }
       }
+      return '';
+    };
+    let r = pickFirst(document.querySelectorAll<HTMLElement>('.segment-assistant .markdown-container .markdown, .segment-assistant .markdown-body, .segment-assistant [class*="message-content"] .markdown'), '主选择器');
+    if (r) return r;
+    const assistantSelectors: [string, string][] = [['.segment-assistant', 'segment-assistant'], ['[class*="assistant"]', 'assistant'], ['[class*="message-content"]', 'message-content'], ['[class*="chat-content"] [class*="content"]', 'chat-content']];
+    for (const [sel, label] of assistantSelectors) {
+      r = pickFirst(document.querySelectorAll<HTMLElement>(sel), label);
+      if (r) return r;
     }
     return '';
   }

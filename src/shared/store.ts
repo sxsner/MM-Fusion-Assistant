@@ -68,9 +68,8 @@ export class Store extends BaseStore<ModelType[]> {
 
   async setSelectedModels(models: ModelType[]): Promise<void> {
     await this.ready;
-    if (!models.includes('deepseek' as ModelType)) models.push('deepseek' as ModelType);
     this.data = [...models];
-    this.scheduleSave();
+    await this.flush();
     this.notify();
   }
 }

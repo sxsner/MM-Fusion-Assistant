@@ -50,6 +50,8 @@ export function setInputValue(input: HTMLTextAreaElement | HTMLInputElement, val
   // Some React versions need beforeinput + input chain
   input.dispatchEvent(new InputEvent('beforeinput', { bubbles: true, inputType: 'insertText', data: value }));
   input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: value }));
+  input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+  input.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: value }));
   input.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
